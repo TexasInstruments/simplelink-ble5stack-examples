@@ -92,6 +92,14 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
     MenuModule_printf(APP_MENU_DEVICE_ADDRESS, 0, "BLE ID Address: "
                       MENU_MODULE_COLOR_BOLD MENU_MODULE_COLOR_GREEN "%s" MENU_MODULE_COLOR_RESET,
                       BLEAppUtil_convertBdAddr2Str(deviceInitDoneData->devAddr));
+    if ( appMainParams.addressMode > ADDRMODE_RANDOM)
+    {
+      // Print the RP address
+        MenuModule_printf(APP_MENU_DEVICE_RP_ADDRESS, 0,
+                     "BLE RP Address: "
+                     MENU_MODULE_COLOR_BOLD MENU_MODULE_COLOR_GREEN "%s" MENU_MODULE_COLOR_RESET,
+                     BLEAppUtil_convertBdAddr2Str(GAP_GetDevAddress(FALSE)));
+    }
 
 #if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG ) )
     // Any device that accepts the establishment of a link using

@@ -178,15 +178,17 @@ ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
 /* ======== NVS ======== */
 /* For Thor devices */
 var nvs1 = NVS.addInstance();
-nvs1.internalFlash.regionBase   = 0x2F000;
+
 if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6")
 {
+    nvs1.internalFlash.regionBase   = 0x30000;
     nvs1.internalFlash.regionSize   = 0xCD000;
 }
 /* For loki devices */
 else if(lpName == "LP_EM_CC2340R5" || lpName == "LP_EM_CC2340R5_Q1")
 {
-    nvs1.internalFlash.regionSize   = 0x4D000;
+    nvs1.internalFlash.regionBase   = 0x32000;
+    nvs1.internalFlash.regionSize   = 0x4A000;
 }
 
 nvs1.internalFlash.regionType   = "Pointer";

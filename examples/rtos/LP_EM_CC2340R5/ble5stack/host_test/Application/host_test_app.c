@@ -404,15 +404,10 @@ static void HostTestApp_taskFxn(void *a0)
 
       if( events & HOST_TL_CALLBACK_EVENT)
       {
-        if (!Queue_empty(Host_testApp_Queue))
+        while (!Queue_empty(Host_testApp_Queue))
         {
           // Push the pending Async Msg to the host.
-          if ( Host_TestApp_Queue_ProcessCbkEvent())
-          {
-            // Q was not empty, there's could be more to handle so preserve the
-            // flag and repost to the task.
-            Event_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
-          }
+          Host_TestApp_Queue_ProcessCbkEvent();
         }
 
       }
@@ -960,7 +955,11 @@ uint8_t Host_TestApp_postCallbackEvent(void *pData, void* callbackFctPtr)
     recPtr->pData = pData;
     recPtr->callbackFctPtr = callbackFctPtr;
 
-    Queue_enqueue(Host_testApp_Queue, (char*)&(recPtr));
+    if(Queue_enqueue(Host_testApp_Queue, (char*)&(recPtr)) == FAILURE)
+    {
+        ICall_free(recPtr);
+        return(false);
+    }
     Event_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
 
     return(true);

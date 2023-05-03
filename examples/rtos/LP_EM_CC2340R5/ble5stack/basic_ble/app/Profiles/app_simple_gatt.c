@@ -32,6 +32,7 @@ $Release Date: PACKAGE RELEASE DATE $
 //*****************************************************************************
 
 static void SimpleGatt_changeCB( uint8_t paramId );
+void SimpleGatt_notifyChar4();
 
 // Simple GATT Profile Callbacks
 static SimpleGattProfile_CBs_t simpleGatt_profileCBs =
@@ -74,13 +75,23 @@ static void SimpleGatt_changeCB( uint8_t paramId )
       {
         SimpleGattProfile_getParameter(SIMPLEGATTPROFILE_CHAR3, &newValue);
 
-        // Print the new value of char 1
+        // Print the new value of char 3
         MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
                           "Char 3 value = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
                           newValue);
+
+        SimpleGatt_notifyChar4();
       }
       break;
+    case SIMPLEGATTPROFILE_CHAR4:
+      {
+        // Print Notification registration to user
+        MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
+                                              "Char 4 = Notification registration");
 
+        SimpleGatt_notifyChar4();
+      }
+      break;
     default:
       // should not reach here!
       break;
@@ -134,4 +145,27 @@ bStatus_t SimpleGatt_start( void )
 
   // Return status value
   return(status);
+}
+
+/*********************************************************************
+ * @fn      SimpleGatt_notifyChar4
+ *
+ * @brief   This function is called when WriteReq has been received to Char 4 or to Char 3.
+ *          The purpose of this function is to send notification of Char 3 with the value
+ *          of Char 3.
+ *
+ * @return  void
+ */
+void SimpleGatt_notifyChar4()
+{
+  uint8_t value;
+  if (SimpleGattProfile_getParameter(SIMPLEGATTPROFILE_CHAR3, &value) == SUCCESS)
+    {
+      // Call to set that value of the fourth characteristic in the profile.
+      // Note that if notifications of the fourth characteristic have been
+      // enabled by a GATT client device, then a notification will be sent
+      // every time there is a change in Char 3 or Char 4.
+      SimpleGattProfile_setParameter(SIMPLEGATTPROFILE_CHAR4, sizeof(uint8_t),
+                                 &value);
+    }
 }

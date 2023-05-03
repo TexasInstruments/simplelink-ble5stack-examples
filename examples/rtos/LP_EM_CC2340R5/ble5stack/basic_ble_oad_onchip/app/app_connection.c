@@ -300,8 +300,9 @@ static uint8_t Connection_removeConnInfo(uint16_t connHandle)
 {
   uint8_t i = 0;
   uint8_t index = 0;
+  uint8_t maxNumConn = MAX_NUM_BLE_CONNS;
 
-  for (i = 0; i < MAX_NUM_BLE_CONNS; i++)
+  for (i = 0; i < maxNumConn; i++)
   {
     if (connectionConnList[i].connHandle == connHandle)
     {
@@ -316,7 +317,7 @@ static uint8_t Connection_removeConnInfo(uint16_t connHandle)
   index = i;
 
   // Shift the items in the array
-  for(i = 0; i < MAX_NUM_BLE_CONNS - 1; i++)
+  for(i = 0; i < maxNumConn - 1; i++)
   {
       if (connectionConnList[i].connHandle == LINKDB_CONNHANDLE_INVALID &&
           connectionConnList[i + 1].connHandle == LINKDB_CONNHANDLE_INVALID)

@@ -636,7 +636,7 @@
             <archiveVersion>1</archiveVersion>
             <data>
                 <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild.bat $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild.bat $TARGET_BPATH$ $TARGET_PATH$</postbuild>
             </data>
         </settings>
         <settings>
@@ -1598,7 +1598,7 @@
             <archiveVersion>1</archiveVersion>
             <data>
                 <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild.bat $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild.bat $TARGET_BPATH$ $TARGET_PATH$</postbuild>
             </data>
         </settings>
         <settings>

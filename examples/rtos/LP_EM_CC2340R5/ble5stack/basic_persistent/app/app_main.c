@@ -83,6 +83,7 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
 {
     bStatus_t status = SUCCESS;
 
+    status = Connection_start();
     status = Peripheral_start();
 
     status = Pairing_start();
