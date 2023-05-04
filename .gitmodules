@@ -1,0 +1,6 @@
+[submodule "simplelink-lowpower-f3-sdk"]
+	path = simplelink-lowpower-f3-sdk
+	url = https://github.com/TexasInstruments/simplelink-lowpower-f3-sdk.git
+[submodule "simplelink-lowpower-f2-sdk"]
+	path = simplelink-lowpower-f2-sdk
+	url = https://github.com/TexasInstruments/simplelink-lowpower-f2-sdk.git
