@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IAR Project Connection File -->
+
+<iarProjectConnection version="1.2" name="rtls_passive app" oneShot="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="IarProjectConnection_1.2.xsd">
+
+    <device>
+        <name>CC2642R1F</name>
+    </device>
+
+    <asmIncludePath>
+        <path>$PROJ_DIR$</path>
+    </asmIncludePath>
+
+    <includePath>
+        <path>$PROJ_DIR$</path>
+        <path>$PROJ_DIR$/Application</path>
+        <path>$PROJ_DIR$/RTLSCtrl</path>
+        <path>$PROJ_DIR$/HAL/Common</path>
+        <path>$PROJ_DIR$/HAL/Include</path>
+        <path>$PROJ_DIR$/Drivers/TRNG</path>
+        <path>$PROJ_DIR$/Startup</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/boards</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/controller/cc26xx/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/rom</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/icall/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/target/_common</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/npi/stack</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/heapmgr</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/profiles/dev_info</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/profiles/simple_profile</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/icall/src/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/osal/src/inc</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/services/src/saddr</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/services/src/sdata</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/cc26xx</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/icall/src</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/profiles/simple_profile/cc26xx</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/target/cc2650/rom</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2_cc26x2</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/kernel/tirtos7/packages</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/posix/iar</path>
+    </includePath>
+
+    <defines>
+        <define>DeviceFamily_CC26X2</define>
+        <define>FLASH_ROM_BUILD</define>
+        <define>NVOCMP_NWSAMEITEM=1</define>
+        <define>HEAPMGR_CONFIG=0x80</define>
+        <define>HEAPMGR_SIZE=0x0</define>
+    </defines>
+
+    <extraOptions>
+        <args>
+            <arg>-f$PROJ_DIR$/ti_aoa_app_config.opt</arg>
+            <arg>-f$PROJ_DIR$/Tools/Defines/rtls_passive_app.opt</arg>
+            <arg>-f$PROJ_DIR$/build_config.opt</arg>
+            <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/build_components.opt</arg>
+            <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/factory_config.opt</arg>
+            <arg>--diag_suppress=Pa205</arg>
+            <arg>--debug</arg>
+            <arg>--silent</arg>
+            <arg>-e</arg>
+            <arg>--aeabi</arg>
+            <arg>--thumb</arg>
+            <arg>--diag_suppress=Pa050</arg>
+        </args>
+    </extraOptions>
+
+    <linkerFile>
+        <override>true</override>
+        <path>$PROJ_DIR$/cc26xx_app_and_stack_agama_tirtos7.icf</path>
+    </linkerFile>
+
+    <linkerExtraOptions>
+        <args>
+            <arg>--keep __vector_table</arg>
+            <arg>--config_def CC2642=1</arg>
+            <arg>--config_def PAGE_ALIGN=1</arg>
+            <arg>-L$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source</arg>
+            <arg>--config_def PAGE_ALIGN=-1</arg>
+            <arg>--config_def FLASH_ROM_BUILD=2</arg>
+            <arg>-L$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/kernel/tirtos7/packages</arg>
+            <arg>-f$PROJ_DIR$/ti_utils_build_linker.cmd.genlibs</arg>
+            <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2_cc26x2/driverlib/bin/iar/driverlib.lib</arg>
+            <arg>--silent</arg>
+        </args>
+    </linkerExtraOptions>
+
+    <customBuildTools>
+        <customBuildTool atRoot="true" name="SysConfig"> <!-- Custom build tool for entire project-->
+            <fileExtensions>.syscfg</fileExtensions>
+            <command>$SYSCONFIG_ROOT$/sysconfig_cli.bat -o $PROJ_DIR$ -s "$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/.metadata/product.json" --compiler iar $FILE_PATH$</command>
+            <output>
+                <path>SysConfig_Generated_Files.ipcf</path>
+            </output>
+            <hasPrio>true</hasPrio> <!-- true: run this tool before all other tools-->
+        </customBuildTool>
+    </customBuildTools>
+
+    <heaps>
+        <heap> <!-- If omitted, id="0" -->
+            <size>0</size>
+        </heap>
+        <heap id="1">
+            <size>0</size>
+        </heap>
+    </heaps>
+    <stacks>
+        <stack> <!-- If omitted, id="0" -->
+            <size>512</size>
+        </stack>
+    </stacks>
+
+
+    <files>
+        <path reference="$PROJ_DIR$/Board.html">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/boards/CC26X2R1_LAUNCHXL/Board.html</path>
+        <path copyTo="$PROJ_DIR$/build_config.opt">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/build_config.opt</path>
+        <path copyTo="$PROJ_DIR$/cc26xx_app_and_stack_agama_tirtos7.icf">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/tirtos7/iar/cc26xx_app_and_stack_agama_tirtos7.icf</path>
+        <path copyTo="$PROJ_DIR$/README.html">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/README.html</path>
+        <path copyTo="$PROJ_DIR$/rtls_passive.syscfg">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/tirtos7/rtls_passive.syscfg</path>
+        <group name="Application" build="true">
+            <path copyTo="$PROJ_DIR$/Application/micro_ble_cm.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Application/micro_ble_cm.c</path>
+            <path copyTo="$PROJ_DIR$/Application/micro_ble_cm.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Application/micro_ble_cm.h</path>
+            <path copyTo="$PROJ_DIR$/Application/rtls_passive.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Application/rtls_passive.c</path>
+            <path copyTo="$PROJ_DIR$/Application/rtls_passive.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Application/rtls_passive.h</path>
+            <path reference="$PROJ_DIR$/Application/util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.c</path>
+            <path reference="$PROJ_DIR$/Application/util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.h</path>
+        </group>
+        <group name="Drivers/NV" build="true">
+            <path reference="$PROJ_DIR$/Drivers/NV/crc.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/crc.c</path>
+            <path reference="$PROJ_DIR$/Drivers/NV/crc.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/crc.h</path>
+            <path reference="$PROJ_DIR$/Drivers/NV/nvintf.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/nvintf.h</path>
+            <path reference="$PROJ_DIR$/Drivers/NV/nvocmp.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/nvocmp.c</path>
+            <path reference="$PROJ_DIR$/Drivers/NV/nvocmp.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/nvocmp.h</path>
+        </group>
+        <group name="Drivers/TRNG" build="true">
+            <path reference="$PROJ_DIR$/Drivers/TRNG/TRNGCC26XX.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/target/_common/TRNGCC26XX.c</path>
+            <path reference="$PROJ_DIR$/Drivers/TRNG/TRNGCC26XX.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/target/_common/TRNGCC26XX.h</path>
+        </group>
+        <group name="HAL/Common" build="true">
+            <path reference="$PROJ_DIR$/HAL/Common/hal_assert.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/common/hal_assert.c</path>
+        </group>
+        <group name="HAL/Include" build="true">
+            <path reference="$PROJ_DIR$/HAL/Include/hal_assert.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/inc/hal_assert.h</path>
+        </group>
+        <group name="NPI/Transport" build="true">
+            <path reference="$PROJ_DIR$/NPI/Transport/npi_tl.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/npi_tl.c</path>
+            <path reference="$PROJ_DIR$/NPI/Transport/npi_tl.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc/npi_tl.h</path>
+        </group>
+        <group name="NPI/Transport/UART" build="true">
+            <path reference="$PROJ_DIR$/NPI/Transport/UART/npi_tl_uart.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/npi_tl_uart.c</path>
+            <path reference="$PROJ_DIR$/NPI/Transport/UART/npi_tl_uart.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc/npi_tl_uart.h</path>
+        </group>
+        <group name="NPI/U_NPI" build="true">
+            <path reference="$PROJ_DIR$/NPI/U_NPI/npi_data.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc/npi_data.h</path>
+            <path reference="$PROJ_DIR$/NPI/U_NPI/npi_task.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/npi_task.c</path>
+            <path reference="$PROJ_DIR$/NPI/U_NPI/npi_task.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc/npi_task.h</path>
+            <path reference="$PROJ_DIR$/NPI/U_NPI/npi_util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/npi_util.c</path>
+            <path reference="$PROJ_DIR$/NPI/U_NPI/npi_util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/npi/src/unified/inc/npi_util.h</path>
+        </group>
+        <group name="OSAL" build="true">
+            <path reference="$PROJ_DIR$/OSAL/osal_snv.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/osal/src/inc/osal_snv.h</path>
+            <path reference="$PROJ_DIR$/OSAL/osal_snv_wrapper.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/osal/src/mcu/cc26xx/osal_snv_wrapper.c</path>
+        </group>
+        <group name="RTLSCtrl" build="true">
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_aoa.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_aoa.c</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_aoa_api.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_aoa_api.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ble.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ble.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ctrl.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ctrl.c</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ctrl.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ctrl.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ctrl_aoa.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ctrl_aoa.c</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ctrl_aoa.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ctrl_aoa.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_ctrl_api.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_ctrl_api.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_host.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_host.h</path>
+            <path copyTo="$PROJ_DIR$/RTLSCtrl/rtls_host_npi.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/RTLSCtrl/rtls_host_npi.c</path>
+        </group>
+        <group name="Startup" build="true">
+            <path copyTo="$PROJ_DIR$/Startup/main.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Startup/main.c</path>
+            <path reference="$PROJ_DIR$/Startup/urfc.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/boards/urfc.c</path>
+            <path reference="$PROJ_DIR$/Startup/urfc.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/boards/urfc.h</path>
+        </group>
+        <group name="Tools/Defines" build="true">
+            <path copyTo="$PROJ_DIR$/Tools/Defines/rtls_passive_app.opt">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_passive/Tools/Defines/rtls_passive_app.opt</path>
+        </group>
+        <group name="uStack" build="true">
+            <path reference="$PROJ_DIR$/uStack/port.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/port.c</path>
+            <path reference="$PROJ_DIR$/uStack/port.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/port.h</path>
+            <path reference="$PROJ_DIR$/uStack/uble.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/uble.c</path>
+            <path reference="$PROJ_DIR$/uStack/uble.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/uble.h</path>
+            <path reference="$PROJ_DIR$/uStack/ugap.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/ugap.c</path>
+            <path reference="$PROJ_DIR$/uStack/ugap.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/ugap.h</path>
+            <path reference="$PROJ_DIR$/uStack/ull.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/ull.c</path>
+            <path reference="$PROJ_DIR$/uStack/ull.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/ull.h</path>
+            <path reference="$PROJ_DIR$/uStack/urfi.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/urfi.c</path>
+            <path reference="$PROJ_DIR$/uStack/urfi.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/urfi.h</path>
+            <path reference="$PROJ_DIR$/uStack/urtls.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/microstack/urtls.c</path>
+            <path reference="$PROJ_DIR$/uStack/urtls.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/inc/urtls.h</path>
+        </group>
+    </files>
+</iarProjectConnection>
