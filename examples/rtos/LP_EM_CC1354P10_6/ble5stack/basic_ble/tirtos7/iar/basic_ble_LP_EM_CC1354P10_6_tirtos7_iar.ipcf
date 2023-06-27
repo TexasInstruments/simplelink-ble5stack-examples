@@ -54,6 +54,7 @@
         <define>FLASH_ONLY_BUILD</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>CC13X2P</define>
+        <define>CC13XX</define>
         <define>HEAPMGR_CONFIG=0x80</define>
         <define>HEAPMGR_SIZE=0x0</define>
     </defines>
