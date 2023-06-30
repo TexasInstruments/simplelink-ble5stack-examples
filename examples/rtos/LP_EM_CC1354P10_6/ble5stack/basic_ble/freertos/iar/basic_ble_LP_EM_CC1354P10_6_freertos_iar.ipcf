@@ -60,6 +60,7 @@
         <define>FLASH_ONLY_BUILD</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>CC13X2P</define>
+        <define>CC13XX</define>
         <define>FREERTOS</define>
         <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
