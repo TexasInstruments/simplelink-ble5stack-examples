@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <Queue_freertos.h>
 #include <ti/drivers/UART2.h>
-
+#include <ti/drivers/dpl/EventP.h>
 #if defined(USE_FPGA) || defined(DEBUG_SW_TRACE)
 #include <driverlib/ioc.h>
 #endif /* USE_FPGA | DEBUG_SW_TRACE */
@@ -55,13 +55,14 @@
 #define HCI_PHY_UPDATE_COMPLETE_EVENT_LEN       6
 #define HCI_SCAN_REQ_REPORT_EVENT_LEN           11
 #define HCI_BLE_CHANNEL_MAP_UPDATE_EVENT_LEN    9
+#define HCI_LONG_TERM_KEY_REQ_EVENT_LEN         13
 
 // Task configuration
 #define HTA_TASK_PRIORITY                     1
 #define HTA_TASK_STACK_SIZE                   1024
 
-#define HTA_ICALL_EVT                         ICALL_MSG_EVENT_ID // Event_Id_31
 #define HTA_QUEUE_EVT                         UTIL_QUEUE_EVENT_ID // Event_Id_30
+#define HTA_ICALL_EVT                         0x00010000 // Event_Id_31
 #define HOST_TL_CALLBACK_EVENT                UTIL_TL_CB_EVENT // Event_Id_00
 
 #define HTA_ALL_EVENTS                        (HTA_ICALL_EVT | HTA_QUEUE_EVT | \
@@ -132,6 +133,7 @@ ICall_BuildRevision buildRev;
 static void HostTestApp_init(void);
 static void HostTestApp_taskFxn(void *a0);
 static void HostTestApp_processGapEvent(ICall_HciExtEvt *pMsg);
+static void HostTestApp_processSmpEvent(ICall_HciExtEvt *pMsg);
 #ifdef RTLS_CTE_TEST
 static void HostTestApp_processTestEvent(ICall_HciExtEvt *pMsg);
 #endif
@@ -358,7 +360,7 @@ static void HostTestApp_taskFxn(void *a0)
   {
     uint32_t events;
 
-    mq_receive(Host_TestApp_syncEvent, (char*)&events, sizeof(uint32_t), NULL);
+    events = EventP_pend(Host_TestApp_syncEvent, HTA_ALL_EVENTS, 0, ICALL_TIMEOUT_FOREVER);
 
     if (events)
     {
@@ -412,7 +414,13 @@ static void HostTestApp_taskFxn(void *a0)
 
       }
     }
+    // If we still have new messages, we need to trigger eventP_post again, else we may miss an event
+    if(!ICall_IsQueueEmpty())
+    {
+      EventP_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
+    }
   }
+
 }
 
 #ifdef ICALL_LITE
@@ -470,6 +478,13 @@ uint8_t HostTestApp_processStackMsg(hciPacket_t *pBuf)
     // There should only be few of these.
     HostTestApp_processGapEvent((ICall_HciExtEvt *) pBuf);
 
+    return(TRUE);
+  }
+  else if ( pBuf->hdr.event == HCI_SMP_EVENT_EVENT)
+  {
+    // Structured Host Event from HCI that Host did not process.
+    // Process SMP events
+    HostTestApp_processSmpEvent((ICall_HciExtEvt*)pBuf);
     return(TRUE);
   }
   else
@@ -640,6 +655,49 @@ static void HostTestApp_processTestEvent(ICall_HciExtEvt *pMsg)
   }
 }
 #endif
+
+/*********************************************************************
+ * @fn      HostTestApp_processSmpEvent
+ *
+ * @brief   Process an incoming Smp Event.
+
+ * @param   pMsg - message to process
+ *
+ * @return  None.
+ */
+static void HostTestApp_processSmpEvent(ICall_HciExtEvt *pMsg)
+{
+  hciEvt_BLEPhyUpdateComplete_t *pEvt = (hciEvt_BLEPhyUpdateComplete_t *)pMsg;
+  uint8 event[HCI_LONG_TERM_KEY_REQ_EVENT_LEN];
+  uint8 eventLen;
+
+  switch (pEvt->BLEEventCode)
+  {
+    case HCI_BLE_LTK_REQUESTED_EVENT:
+      {
+        hciEvt_BLELTKReq_t *pkt = (hciEvt_BLELTKReq_t *) pEvt;
+        event[0] = pkt->BLEEventCode;                                       // event code
+        event[1] = LO_UINT16(pkt->connHandle);                              // connection handle (LSB)
+        event[2] = HI_UINT16(pkt->connHandle);                              // connection handle (MSB)
+        memcpy(&event[3], &pkt->random, B_RANDOM_NUM_SIZE);
+        event[3 + B_RANDOM_NUM_SIZE] = LO_UINT16(pkt->encryptedDiversifier); // encrypted Diversifier (LSB)
+        event[4 + B_RANDOM_NUM_SIZE] = HI_UINT16(pkt->encryptedDiversifier); // encrypted Diversifier (MSB)
+        eventLen = HCI_LONG_TERM_KEY_REQ_EVENT_LEN;
+      }
+      break;
+
+    default:
+      eventLen = 0;
+      break;
+  }
+
+  if (eventLen > 0)
+  {
+    // Send BLE Complete Event
+    sendBLECompleteEvent(eventLen, event);
+  }
+}
+
 /*********************************************************************
  * @fn      HostTestApp_processBLEEvent
  *
@@ -960,7 +1018,7 @@ uint8_t Host_TestApp_postCallbackEvent(void *pData, void* callbackFctPtr)
         ICall_free(recPtr);
         return(false);
     }
-    Event_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
+    EventP_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
 
     return(true);
   }

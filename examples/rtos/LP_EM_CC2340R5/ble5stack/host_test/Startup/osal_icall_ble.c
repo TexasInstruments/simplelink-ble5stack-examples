@@ -146,6 +146,15 @@ void osalInitTasks( void )
   uint8 taskID = 0;
   uint8 i;
 
+#if ( HOST_CONFIG & ( CENTRAL_CFG | PERIPHERAL_CFG ) )
+#if !defined ( GATT_DB_OFF_CHIP )
+  uint8_t cfg_gatt_max_num_prepare_writes = 0;
+#if defined ( GATT_MAX_PREPARE_WRITES )
+  cfg_gatt_max_num_prepare_writes = GATT_MAX_PREPARE_WRITES;
+#endif
+#endif
+#endif
+
 #if defined ( ATT_DELAYED_REQ )
   cfg_GATTServApp_att_delayed_req = 1;
 #endif
@@ -194,7 +203,7 @@ void osalInitTasks( void )
 
 #if !defined ( GATT_DB_OFF_CHIP )
   /* GATT Server App Task */
-  GATTServApp_Init( taskID++, cfg_GATTServApp_att_delayed_req, cfg_gapBond_gatt_no_service_changed);
+  GATTServApp_Init( taskID++, cfg_GATTServApp_att_delayed_req, cfg_gapBond_gatt_no_service_changed, cfg_gatt_max_num_prepare_writes );
 
   #if defined ( GATT_TEST )
     /* GATT Test Task */

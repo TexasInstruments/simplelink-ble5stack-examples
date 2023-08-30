@@ -64,28 +64,31 @@
 #define RAM_SIZE     0x00009000
 #define CCFG_BASE    0x4E020000
 #define CCFG_SIZE    0x800
-#define NVS_SIZE        0x4000
-#define NVS_BASE        (FLASH_SIZE - NVS_SIZE)
+#define NVS_SIZE     0x4000
+#define NVS_BASE     (FLASH_SIZE - NVS_SIZE)
 
-#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
+#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT) || defined(OAD_DUAL_IMAGE)
 #define MCU_HDR_SIZE    0x100
 #define MCUBOOT_BASE    FLASH_BASE
 #define MCUBOOT_SIZE    0x6000
 #define APP_HDR_BASE    APP_HDR_ADDR
-#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
+#define APP_BASE        (APP_HDR_BASE + MCU_HDR_SIZE)
+#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT) || defined(OAD_DUAL_IMAGE)
 
 #if defined(OAD_APP_ONCHIP)|| defined(OAD_PERSISTENT)
 #define PERSISTENT_HDR_BASE 0x6000
 #define PERSISTENT_BASE     (PERSISTENT_HDR_BASE + MCU_HDR_SIZE)
-#define APP_BASE            (APP_HDR_BASE + MCU_HDR_SIZE)
 #define PERSISTENT_SIZE     (APP_HDR_BASE - PERSISTENT_BASE)
 #define APP_SIZE            (FLASH_SIZE - APP_BASE - NVS_SIZE)
 #endif //defined(OAD_APP_ONCHIP)|| defined(OAD_PERSISTENT)
 
 #ifdef OAD_APP_OFFCHIP
-#define APP_BASE        (APP_HDR_BASE + MCU_HDR_SIZE)
 #define APP_SIZE        (FLASH_SIZE - APP_BASE - NVS_SIZE)
 #endif //OAD_APP_OFFCHIP
+
+#ifdef OAD_DUAL_IMAGE
+#define APP_SIZE        ((FLASH_SIZE - NVS_SIZE - MCUBOOT_SIZE)/2 - MCU_HDR_SIZE)
+#endif //OAD_DUAL_IMAGE
 
 /*******************************************************************************
  * Memory Definitions
@@ -183,7 +186,7 @@ MEMORY
    * Properties->ARM Linker->Advanced Options->Command File Preprocessing.
    */
 
-#if defined(OAD_APP_OFFCHIP)|| defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
+#if defined(OAD_APP_OFFCHIP)|| defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT) || defined(OAD_DUAL_IMAGE)
 
     MCUBOOT_SLOT(RX)       : origin = MCUBOOT_BASE        ,length = MCUBOOT_SIZE
     APP_HDR_SLOT(RX)       : origin = APP_HDR_BASE        ,length = MCU_HDR_SIZE
@@ -191,8 +194,8 @@ MEMORY
 
 #if defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
 
-    PESISTENT_HDR_SLOT(RX) : origin = PERSISTENT_HDR_BASE ,length = MCU_HDR_SIZE
-    PERSITENT_SLOT(RX)     : origin = PERSISTENT_BASE     ,length = PERSISTENT_SIZE
+    PERSISTENT_HDR_SLOT(RX) : origin = PERSISTENT_HDR_BASE ,length = MCU_HDR_SIZE
+    PERSISTENT_SLOT(RX)     : origin = PERSISTENT_BASE     ,length = PERSISTENT_SIZE
 
 #endif //defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
 
@@ -214,11 +217,11 @@ MEMORY
  ******************************************************************************/
 SECTIONS
 {
-#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
+#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT) || defined(OAD_DUAL_IMAGE)
 
 	.primary_hdr    :   > APP_HDR_SLOT, type = NOLOAD
 
-#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP)
+#if defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_DUAL_IMAGE)
 
     .resetVecs      :   > APP_BASE
     .text           :   > APP_SLOT
@@ -234,17 +237,17 @@ SECTIONS
 #else
 
     .resetVecs      :   > PERSISTENT_BASE
-    .text           :   > PERSITENT_SLOT
-    .const          :   > PERSITENT_SLOT
-    .constdata      :   > PERSITENT_SLOT
-    .rodata         :   > PERSITENT_SLOT
-    .binit          :   > PERSITENT_SLOT
-    .cinit          :   > PERSITENT_SLOT
-    .pinit          :   > PERSITENT_SLOT
-    .init_array     :   > PERSITENT_SLOT
-    .emb_text       :   > PERSITENT_SLOT
+    .text           :   > PERSISTENT_SLOT
+    .const          :   > PERSISTENT_SLOT
+    .constdata      :   > PERSISTENT_SLOT
+    .rodata         :   > PERSISTENT_SLOT
+    .binit          :   > PERSISTENT_SLOT
+    .cinit          :   > PERSISTENT_SLOT
+    .pinit          :   > PERSISTENT_SLOT
+    .init_array     :   > PERSISTENT_SLOT
+    .emb_text       :   > PERSISTENT_SLOT
 
-#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP)
+#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_DUAL_IMAGE)
 
 #else
   .resetVecs      :   >  FLASH_START
@@ -258,7 +261,7 @@ SECTIONS
   .emb_text       :   >> FLASH
 
 
-#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT)
+#endif //defined(OAD_APP_OFFCHIP) || defined(OAD_APP_ONCHIP) || defined(OAD_PERSISTENT) || defined(OAD_DUAL_IMAGE)
 
   .ccfg           :   > CCFG
   .ramVecs        :   > SRAM, type = NOLOAD, ALIGN(256)

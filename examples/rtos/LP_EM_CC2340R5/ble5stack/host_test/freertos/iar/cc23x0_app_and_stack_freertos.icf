@@ -53,27 +53,31 @@ define symbol RAM_SIZE            = 0x00009000;
 define symbol FLASH_SIZE          = 0x00080000;
 define symbol NVS_SIZE              =  0x4000;
 
-if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT))
+if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT) || isdefinedsymbol(OAD_DUAL_IMAGE))
 {
   define symbol MCU_HDR_SIZE  =  0x100;
   define symbol MCUBOOT_BASE  =  FLASH_BASE;
   define symbol MCUBOOT_SIZE  =  0x6000;
   define symbol APP_HDR_BASE  =  APP_HDR_ADDR;
+  define symbol APP_BASE             = (APP_HDR_BASE + MCU_HDR_SIZE);
 }
 
 if (isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT))
 {
   define symbol PERSISTENT_HDR_BASE  = 0x6000;
   define symbol PERSISTENT_BASE      = (PERSISTENT_HDR_BASE + MCU_HDR_SIZE);
-  define symbol APP_BASE             = (APP_HDR_BASE + MCU_HDR_SIZE);
   define symbol PERSISTENT_SIZE     = (APP_HDR_BASE - PERSISTENT_BASE);
   define symbol APP_SIZE             = (FLASH_SIZE - APP_BASE - NVS_SIZE);
 }
 
 if (isdefinedsymbol(OAD_APP_OFFCHIP))
 {
-  define symbol APP_BASE      =  (APP_HDR_BASE + MCU_HDR_SIZE);
   define symbol APP_SIZE      =  (FLASH_SIZE - APP_BASE - NVS_SIZE);
+}
+
+if (isdefinedsymbol(OAD_DUAL_IMAGE))
+{
+  define symbol APP_SIZE      =  ((FLASH_SIZE - NVS_SIZE - MCUBOOT_SIZE)/2 - MCU_HDR_SIZE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +153,7 @@ define memory mem with size = 4G;
 define region RAM                 = mem:[from RAM_START   to RAM_END];
 
 
-if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT))
+if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT) || isdefinedsymbol(OAD_DUAL_IMAGE))
 {
   define region MCUBOOT_SLOT = mem:[from MCUBOOT_BASE to (MCUBOOT_BASE + MCUBOOT_SIZE)];
   define region APP_HDR_SLOT = mem:[from APP_HDR_BASE to APP_BASE];
@@ -175,7 +179,7 @@ define region FLASH_ALL           = mem:[from FLASH_START to FLASH_END] |
 ////////////////////////////////////////////////////////////////////////////////
 
 // CCFG
-if (!(isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT)))
+if (!(isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_PERSISTENT) || isdefinedsymbol(OAD_DUAL_IMAGE)))
 {
   define symbol __CCFG_START__    = 0x4E020000;
   define symbol __CCFG_END__      = 0x4E0207FF;
@@ -202,7 +206,7 @@ if (!(isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isd
 }
 
 // Interrupt Vector Table
-if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP))
+if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_DUAL_IMAGE))
 {
   place at address mem:APP_BASE { readonly section .resetVecs };
 }
@@ -217,7 +221,7 @@ else
 keep                             { readonly section .resetVecs };
 
 // All other pieces of code:
-if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP))
+if (isdefinedsymbol(OAD_APP_OFFCHIP) || isdefinedsymbol(OAD_APP_ONCHIP) || isdefinedsymbol(OAD_DUAL_IMAGE))
 {
   place in APP_SLOT { readonly };
 }

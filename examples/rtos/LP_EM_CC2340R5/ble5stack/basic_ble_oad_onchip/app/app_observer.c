@@ -65,55 +65,54 @@ BLEAppUtil_EventHandler_t observerScanHandler =
 const BLEAppUtil_ScanInit_t observerScanInitParams =
 {
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .primPhy                    = SCAN_PRIM_PHY_1M,
+    .primPhy                    = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_TYPE_ACTIVE | SCAN_TYPE_PASSIVE */
-    .scanType                   = SCAN_TYPE_ACTIVE,
+    .scanType                   = DEFAULT_SCAN_TYPE,
 
     /*! Scan interval shall be greater than or equal to scan window */
-    .scanInterval               = 800, /* Units of 625 us */
+    .scanInterval               = DEFAULT_SCAN_INTERVAL, /* Units of 625 us */
 
     /*! Scan window shall be less than or equal to scan interval */
-    .scanWindow                 = 800, /* Units of 625 us */
+    .scanWindow                 = DEFAULT_SCAN_WINDOW, /* Units of 625 us */
 
     /*! Select which fields of an advertising report will be stored */
     /*! in the AdvRptList, For mor field see @ref Gap_scanner.h     */
-    .advReportFields            = SCAN_ADVRPT_FLD_ADDRESS | SCAN_ADVRPT_FLD_ADDRTYPE,
+    .advReportFields            = ADV_RPT_FIELDS,
 
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .scanPhys                   = SCAN_PRIM_PHY_1M,
+    .scanPhys                   = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_WL | SCAN_FLT_POLICY_ALL_RPA
      *  | SCAN_FLT_POLICY_WL_RPA */
-    .fltPolicy                  = SCAN_FLT_POLICY_ALL,
+    .fltPolicy                  = SCANNER_FILTER_POLICY,
 
     /*! For more filter PDU @ref Gap_scanner.h */
-    .fltPduType                 = SCAN_FLT_PDU_CONNECTABLE_ONLY |
-                                  SCAN_FLT_PDU_COMPLETE_ONLY,
+    .fltPduType                 = SCANNER_FILTER_PDU_TYPE,
 
     /*! Opt SCAN_FLT_RSSI_ALL | SCAN_FLT_RSSI_NONE */
-    .fltMinRssi                 = SCAN_FLT_RSSI_ALL,
+    .fltMinRssi                 = SCANNER_FILTER_MIN_RSSI,
 
     /*! Opt SCAN_FLT_DISC_NONE | SCAN_FLT_DISC_GENERAL | SCAN_FLT_DISC_LIMITED
      *  | SCAN_FLT_DISC_ALL | SCAN_FLT_DISC_DISABLE */
-    .fltDiscMode                = SCAN_FLT_DISC_DISABLE,
+    .fltDiscMode                = SCANNER_FILTER_DISC_MODE,
 
     /*! Opt SCAN_FLT_DUP_ENABLE | SCAN_FLT_DUP_DISABLE | SCAN_FLT_DUP_RESET */
-    .fltDup                     = SCAN_FLT_DUP_ENABLE
+    .fltDup                     = SCANNER_DUPLICATE_FILTER
 };
 
 const BLEAppUtil_ScanStart_t observerScanStartParams =
 {
     /*! Zero for continuously scanning */
-    .scanPeriod     = 0, /* Units of 1.28sec */
+    .scanPeriod     = DEFAULT_SCAN_PERIOD, /* Units of 1.28sec */
 
     /*! Scan Duration shall be greater than to scan interval,*/
     /*! Zero continuously scanning. */
-    .scanDuration   = 0, /* Units of 10ms */
+    .scanDuration   = DEFAULT_SCAN_DURATION, /* Units of 10ms */
 
     /*! If non-zero, the list of advertising reports will be */
     /*! generated and come with @ref GAP_EVT_SCAN_DISABLED.  */
-    .maxNumReport   = 0
+    .maxNumReport   = APP_MAX_NUM_OF_ADV_REPORTS
 };
 
 static App_scanResults observerScanRes[APP_MAX_NUM_OF_ADV_REPORTS] = {0};

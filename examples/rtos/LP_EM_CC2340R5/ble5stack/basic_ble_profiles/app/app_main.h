@@ -23,7 +23,6 @@ $Release Date: PACKAGE RELEASE DATE $
 //*****************************************************************************
 //! Defines
 //*****************************************************************************
-#define APP_MAX_NUM_OF_ADV_REPORTS  20
 
 //*****************************************************************************
 //! Typedefs
@@ -197,11 +196,22 @@ bStatus_t DataStream_start(void);
  *
  * @brief   This function is called after stack initialization,
  *          the purpose of this function is to initialize and
- *          register the Data Stream profile.
+ *          register the CGM profile.
  *
  * @return  SUCCESS or stack call status
  */
 bStatus_t CGM_start(void);
+
+/*********************************************************************
+ * @fn      GL_start
+
+ * @brief   This function is called after stack initialization,
+ *          the purpose of this function is to initialize and
+ *          register the Glucose profile.
+ *
+ * @return  SUCCESS or stack call status
+ */
+bStatus_t GL_start(void);
 
 /*********************************************************************
  * @fn      Menu_start
@@ -243,5 +253,15 @@ App_connInfo *Connection_getConnList(void);
  *          MAX_NUM_BLE_CONNS will be returned.
  */
 uint16_t Connection_getConnhandle(uint8_t index);
+
+/*********************************************************************
+ * @fn      Connection_getConnIndex
+ *
+ * @brief   Find index in the connected device list by connHandle
+ *
+ * @return  the index of the entry that has the given connection handle.
+ *          if there is no match, LL_INACTIVE_CONNECTIONS will be returned.
+ */
+uint16_t Connection_getConnIndex(uint16_t connHandle);
 
 #endif /* APP_MAIN_H_ */

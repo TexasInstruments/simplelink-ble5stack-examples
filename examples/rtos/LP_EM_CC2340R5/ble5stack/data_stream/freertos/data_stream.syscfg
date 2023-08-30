@@ -109,13 +109,14 @@ for(var setting in bleCcfgSettings)
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x00005000;
-FreeRTOS.timerStackSize       = 0x00000180;
-FreeRTOS.idleStackSize        = 0x00000100;
+FreeRTOS.heapSize             = 0x000044B0;
+FreeRTOS.timerStackSize       = 0x00000190;
+FreeRTOS.idleStackSize        = 0x00000130;
 
 /* ======== BLE ======== */
 var ble = scripting.addModule("/ti/ble5stack/ble");
 ble.deviceRole = "PERIPHERAL_CFG";
+ble.basicBLE = true;
 ble.disDevBySerUuid = true;
 ble.maxConnNum = 1;
 ble.deviceName = "Basic BLE project";
@@ -138,6 +139,7 @@ ble.advSet1.scanRes1.minConnInterval = 100;
 ble.advSet1.scanRes1.maxConnInterval = 130;
 // TX Power Level
 ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
+ble.dupFilter = "SCAN_FLT_DUP_DISABLE";
 
 /*
  * Copyright (c) 2018, Texas Instruments Incorporated
@@ -199,3 +201,4 @@ ble.advSet1.advData1.GAP_ADTYPE_16BIT_MORE = false;
 ble.advSet1.advData1.GAP_ADTYPE_128BIT_MORE = true;
 ble.advSet1.advData1.numOfUUIDs128More = 1;
 ble.advSet1.advData1.UUID0128More = system.utils.bigInt("00000000000000B000405104C0C000F0",16);
+ble.maxNumPrepareWrites = 10;

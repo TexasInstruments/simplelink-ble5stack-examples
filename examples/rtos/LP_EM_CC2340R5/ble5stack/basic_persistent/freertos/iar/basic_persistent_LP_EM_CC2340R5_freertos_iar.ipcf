@@ -15,6 +15,11 @@
 
     <includePath>
         <path>$PROJ_DIR$</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/mcuboot/boot/bootutil/include</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/mcuboot/boot/ti/source/mcuboot_app</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/cc26xx/flash_interface</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/nvs</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5/driverlib</path>
         <path>$PROJ_DIR$/app</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti</path>
@@ -38,41 +43,35 @@
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/nv</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/cc26xx</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/icall/src</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/mcuboot/boot/bootutil/include</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/mcuboot/boot/ti/source/mcuboot_app</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/cc26xx/flash_interface</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/nvs</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5/driverlib</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5/settings</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/rcl</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/posix/iar</path>
         <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/include</path>
+        <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/portable/IAR/ARM_CM0</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos</path>
     </includePath>
 
     <defines>
-        <define>ICALL_NO_APP_EVENTS</define>
-        <define>OAD_CFG</define>
         <define>APP_HDR_ADDR=0x32000</define>
+        <define>OAD_CFG</define>
+        <define>ICALL_NO_APP_EVENTS</define>
         <define>CC23X0</define>
-        <define>DeviceFamily_CC23X0R5</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
         <define>USE_RCL</define>
+        <define>FREERTOS</define>
+        <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
 
     <extraOptions>
         <args>
+            <arg>-f$PROJ_DIR$/ti_utils_build_compiler.opt</arg>
             <arg>-f$PROJ_DIR$/ti_ble_app_config.opt</arg>
             <arg>-f$PROJ_DIR$/ti_build_config.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/build_components.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/factory_config.opt</arg>
-            <arg> -I$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/include</arg>
-            <arg> -I$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/portable/IAR/ARM_CM0</arg>
-            <arg> -I$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos</arg>
-            <arg> -DFREERTOS</arg>
-            <arg> -DNVOCMP_POSIX_MUTEX</arg>
             <arg>--debug</arg>
             <arg>--silent</arg>
             <arg>-e</arg>
@@ -89,10 +88,9 @@
 
     <linkerExtraOptions>
         <args>
-            <arg>--keep __vector_table</arg>
-            <arg>--config_def PAGE_ALIGN=1</arg>
-            <arg>--config_def OAD_PERSISTENT=1</arg>
             <arg>--config_def APP_HDR_ADDR=0x32000</arg>
+            <arg>--config_def OAD_PERSISTENT=1</arg>
+            <arg>--keep __vector_table</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel</arg>
             <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/spiffs/lib/iar/m0p/spiffs.a</arg>
@@ -151,7 +149,6 @@
         </group>
         <group name="app/Profiles" build="true">
             <path copyTo="$PROJ_DIR$/app/Profiles/app_dev_info.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_persistent/app/Profiles/app_dev_info.c</path>
-            <path copyTo="$PROJ_DIR$/app/Profiles/app_simple_gatt.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_persistent/app/Profiles/app_simple_gatt.c</path>
         </group>
         <group name="common/BLEAppUtil" build="true">
             <path reference="$PROJ_DIR$/common/BLEAppUtil/bleapputil_init.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/ble_app_util/src/bleapputil_init.c</path>
@@ -186,17 +183,9 @@
             <path reference="$PROJ_DIR$/common/iCallBLE/icall_api_lite.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/icall/app/icall_api_lite.c</path>
             <path reference="$PROJ_DIR$/common/iCallBLE/icall_ble_apimsg.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/icall/inc/icall_ble_apimsg.h</path>
         </group>
-        <group name="common/MenuModule" build="true">
-            <path reference="$PROJ_DIR$/common/MenuModule/menu_module.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/menu_module/menu_module.c</path>
-            <path reference="$PROJ_DIR$/common/MenuModule/menu_module.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/menu_module/menu_module.h</path>
-        </group>
         <group name="common/Profiles/oad" build="true">
             <path reference="$PROJ_DIR$/common/Profiles/oad/oad_profile.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/oad/oad_profile.c</path>
             <path reference="$PROJ_DIR$/common/Profiles/oad/oad_profile.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/oad/oad_profile.h</path>
-        </group>
-        <group name="common/Profiles/simple_gatt" build="true">
-            <path reference="$PROJ_DIR$/common/Profiles/simple_gatt/simple_gatt_profile.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.c</path>
-            <path reference="$PROJ_DIR$/common/Profiles/simple_gatt/simple_gatt_profile.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h</path>
         </group>
         <group name="common/Services/dev_info" build="true">
             <path reference="$PROJ_DIR$/common/Services/dev_info/dev_info_service.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/dev_info/dev_info_service.c</path>
@@ -222,7 +211,7 @@
             <path reference="$PROJ_DIR$/common/Util/SwUpdate/sw_update.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/util/sw_update/sw_update.h</path>
         </group>
         <group name="Startup" build="true">
-            <path reference="$PROJ_DIR$/Startup/rcl_settings_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/rcl_settings_ble.c</path>
+            <path reference="$PROJ_DIR$/Startup/rcl_settings_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5/rcl_settings_ble.c</path>
         </group>
     </files>
 </iarProjectConnection>

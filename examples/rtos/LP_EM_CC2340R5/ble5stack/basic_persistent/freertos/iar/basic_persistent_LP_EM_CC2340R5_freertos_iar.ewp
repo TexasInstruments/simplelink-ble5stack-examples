@@ -636,7 +636,7 @@
             <archiveVersion>1</archiveVersion>
             <data>
                 <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_app_onchip_postbuild $COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0x2C000</postbuild>
+                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_basic_persistent_postbuild $COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0x2C000</postbuild>
             </data>
         </settings>
         <settings>
@@ -1598,7 +1598,7 @@
             <archiveVersion>1</archiveVersion>
             <data>
                 <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_app_onchip_postbuild $COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0x2C000</postbuild>
+                <postbuild>$COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_basic_persistent_postbuild $COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0x2C000</postbuild>
             </data>
         </settings>
         <settings>
