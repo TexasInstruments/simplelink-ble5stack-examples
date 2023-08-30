@@ -39,7 +39,7 @@ $Release Date: PACKAGE RELEASE DATE $
 OADProfile_AppCommand_e App_OADCallback(OADProfile_App_Msg_e msg)
 {
     OADProfile_AppCommand_e cmd = OAD_PROFILE_PROCEED;
-    /*switch(msg)
+    switch(msg)
     {
         case OAD_PROFILE_MSG_REVOKE_IMG_HDR:
         {
@@ -71,7 +71,7 @@ OADProfile_AppCommand_e App_OADCallback(OADProfile_App_Msg_e msg)
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
-    }*/
+    }
     return (cmd);
 }
 

@@ -117,6 +117,7 @@ FreeRTOS.idleStackSize        = 0x00000100;
 /* ======== BLE ======== */
 var ble = scripting.addModule("/ti/ble5stack/ble");
 ble.deviceRole = "PERIPHERAL_CFG+CENTRAL_CFG";
+ble.basicBLE = true;
 ble.disDevBySerUuid = true;
 ble.deviceName = "Basic BLE project";
 ble.numOfAdvSets = 1;

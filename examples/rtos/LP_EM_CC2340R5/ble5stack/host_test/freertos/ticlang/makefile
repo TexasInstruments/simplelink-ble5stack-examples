@@ -10,15 +10,17 @@ SYSCFG_FILES := $(shell $(SYSCFG_CMD_STUB) --listGeneratedFiles --listReferenced
 
 SYSCFG_C_FILES = $(filter %.c,$(SYSCFG_FILES))
 SYSCFG_H_FILES = $(filter %.h,$(SYSCFG_FILES))
+SYSCFG_OPT_FILES = $(filter %.opt,$(SYSCFG_FILES))
 
-OBJECTS = Application_host_test_app.obj Startup_osal_icall_ble.obj Application_util.obj Drivers_NV_crc.obj Drivers_NV_nvocmp.obj iCallBLE_ble_user_config.obj iCallBLE_ble_user_config_stack.obj iCallBLE_icall_api_lite.obj iCallBLE_icall_hci_tl.obj NPI_Transport_SPI_npi_tl_spi.obj NPI_Transport_UART_npi_tl_uart.obj NPI_Transport_npi_tl.obj NPI_npi_frame_hci.obj NPI_npi_rxbuf.obj NPI_npi_task.obj StackWrapper_HAL_Common_hal_assert.obj StackWrapper_HAL_Target_CC2650_Drivers_hal_flash_wrapper.obj StackWrapper_Host_gap.obj StackWrapper_Host_gapbondmgr.obj StackWrapper_Host_gatt_uuid.obj StackWrapper_Host_gattservapp_util.obj StackWrapper_Host_sm_ecc.obj StackWrapper_ICallBLE_ble_dispatch_JT.obj StackWrapper_ICallBLE_ble_dispatch_lite.obj StackWrapper_ICallBLE_icall_lite_translation.obj StackWrapper_OSAL_osal.obj StackWrapper_OSAL_osal_bufmgr.obj StackWrapper_OSAL_osal_cbtimer.obj StackWrapper_OSAL_osal_clock.obj StackWrapper_OSAL_osal_list.obj StackWrapper_OSAL_osal_memory_icall.obj StackWrapper_OSAL_osal_pwrmgr.obj StackWrapper_OSAL_osal_snv_wrapper.obj StackWrapper_OSAL_osal_timers.obj StackWrapper_ROM_common_rom_init.obj StackWrapper_Startup_icall_startup.obj StackWrapper_Tools_onboard.obj Startup_rom_init.obj iCall_icall_POSIX.obj Startup_main_freertos.obj Application_Queue_freertos.obj iCall_icall_cc23x0.obj iCall_icall_user_config.obj Startup_rcl_settings_ble.obj $(patsubst %.c,%.obj,$(notdir $(SYSCFG_C_FILES)))
+OBJECTS = Application_host_test_app.obj Startup_osal_icall_ble.obj common_Util_util.obj Drivers_NV_crc.obj Drivers_NV_nvocmp.obj iCallBLE_ble_user_config.obj iCallBLE_ble_user_config_stack.obj iCallBLE_icall_api_lite.obj iCallBLE_icall_hci_tl.obj NPI_Transport_SPI_npi_tl_spi.obj NPI_Transport_UART_npi_tl_uart.obj NPI_Transport_npi_tl.obj NPI_npi_frame_hci.obj NPI_npi_rxbuf.obj NPI_npi_task.obj StackWrapper_HAL_Common_hal_assert.obj StackWrapper_HAL_Target_CC2650_Drivers_hal_flash_wrapper.obj StackWrapper_Host_gap.obj StackWrapper_Host_gapbondmgr.obj StackWrapper_Host_gatt_uuid.obj StackWrapper_Host_gattservapp_util.obj StackWrapper_Host_sm_ecc.obj StackWrapper_ICallBLE_ble_dispatch_JT.obj StackWrapper_ICallBLE_ble_dispatch_lite.obj StackWrapper_ICallBLE_icall_lite_translation.obj StackWrapper_OSAL_osal.obj StackWrapper_OSAL_osal_bufmgr.obj StackWrapper_OSAL_osal_cbtimer.obj StackWrapper_OSAL_osal_clock.obj StackWrapper_OSAL_osal_list.obj StackWrapper_OSAL_osal_memory_icall.obj StackWrapper_OSAL_osal_pwrmgr.obj StackWrapper_OSAL_osal_snv_wrapper.obj StackWrapper_OSAL_osal_timers.obj StackWrapper_ROM_common_rom_init.obj StackWrapper_Startup_icall_startup.obj StackWrapper_Tools_onboard.obj Startup_rom_init.obj iCall_icall_POSIX.obj Startup_main_freertos.obj Application_Queue_freertos.obj iCall_icall_cc23x0.obj iCall_icall_user_config.obj Startup_rcl_settings_ble.obj $(patsubst %.c,%.obj,$(notdir $(SYSCFG_C_FILES)))
 NAME = host_test
 
-CFLAGS = -I../.. \
+CFLAGS += -I../.. \
     -I. \
-    -I${PROJECT_LOC}/Application \
-    @${PROJECT_LOC}/Tools/build_config.opt \
-    @${PROJECT_LOC}/Tools/Defines/host_test.opt \
+    $(addprefix @,$(SYSCFG_OPT_FILES)) \
+    -I../../Application \
+    @../../Tools/build_config.opt \
+    @../../Tools/Defines/host_test.opt \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/Examples_source/basic_ble_project/dpl" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/common/cc26xx/npi/stack" \
     -std=gnu9x \
@@ -49,7 +51,6 @@ CFLAGS = -I../.. \
     "@$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/config/factory_config.opt" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/npi/src/inc" \
     -DCC23X0 \
-    -DDeviceFamily_CC23X0R5 \
     -DNVOCMP_NWSAMEITEM=1 \
     -DFLASH_ONLY_BUILD \
     -DUSE_RCL \
@@ -59,25 +60,19 @@ CFLAGS = -I../.. \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/boards/cc23x0r5" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/posix/ticlang" \
     "-I$(FREERTOS_INSTALL_DIR)/FreeRTOS/Source/include" \
-    " -I$(FREERTOS_INSTALL_DIR)/FreeRTOS/Source/include" \
-    " -I$(FREERTOS_INSTALL_DIR)/FreeRTOS/Source/portable/GCC/ARM_CM0" \
-    " -I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/kernel/freertos" \
-     -DFREERTOS \
-     -DNVOCMP_POSIX_MUTEX \
+    "-I$(FREERTOS_INSTALL_DIR)/FreeRTOS/Source/portable/GCC/ARM_CM0" \
+    "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/kernel/freertos" \
+    -DFREERTOS \
+    -DNVOCMP_POSIX_MUTEX \
     -gdwarf-3 \
     -mcpu=cortex-m0plus \
     -march=thumbv6m \
     -mfloat-abi=soft \
     -mthumb
 
-LFLAGS = --diag_wrap=off \
+LFLAGS += --diag_wrap=off \
     --display_error_number \
     -x \
-    --diag_suppress=16002-D \
-    --diag_suppress=10247-D \
-    --diag_suppress=10325-D \
-    --diag_suppress=10229-D \
-    --diag_suppress=16032-D \
     -c \
     "-L$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source" \
     "-l$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/third_party/spiffs/lib/ticlang/m0p/spiffs.a" \
@@ -95,7 +90,12 @@ LFLAGS = --diag_wrap=off \
     -Wl,--warn_sections \
     "-L$(TICLANG_ARMCOMPILER)/lib" \
     -llibc.a
-all: $(NAME).out
+
+all: postbuild
+
+.PHONY: postbuild
+postbuild: $(NAME).out
+	${CG_TOOL_HEX} -order MS --memwidth=8 --romwidth=8 --intel -o ${ProjName}.hex ${ProjName}.out
 
 .INTERMEDIATE: syscfg
 $(SYSCFG_FILES): syscfg
@@ -121,7 +121,7 @@ Startup_osal_icall_ble.obj: ../../Startup/osal_icall_ble.c $(SYSCFG_H_FILES)
 	@ echo Building $@
 	@ $(CC) $(CFLAGS) -c $< -o $@
 
-Application_util.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/common/cc26xx/util.c $(SYSCFG_H_FILES)
+common_Util_util.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/common/cc26xx/util.c $(SYSCFG_H_FILES)
 	@ echo Building $@
 	@ $(CC) $(CFLAGS) -c $< -o $@
 
@@ -285,7 +285,7 @@ iCall_icall_user_config.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti
 	@ echo Building $@
 	@ $(CC) $(CFLAGS) -c $< -o $@
 
-Startup_rcl_settings_ble.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/common/cc26xx/rcl_settings_ble.c $(SYSCFG_H_FILES)
+Startup_rcl_settings_ble.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/boards/cc23x0r5/rcl_settings_ble.c $(SYSCFG_H_FILES)
 	@ echo Building $@
 	@ $(CC) $(CFLAGS) -c $< -o $@
 

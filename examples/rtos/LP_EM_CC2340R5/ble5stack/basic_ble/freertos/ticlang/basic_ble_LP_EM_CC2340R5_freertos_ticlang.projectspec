@@ -59,7 +59,6 @@
             @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/build_components.opt
             @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/factory_config.opt
             -DCC23X0
-            -DDeviceFamily_CC23X0R5
             -DNVOCMP_NWSAMEITEM=1
             -DFLASH_ONLY_BUILD
             -DUSE_RCL
@@ -69,11 +68,10 @@
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/include
-             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/include
-             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM0
-             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
-             -DFREERTOS
-             -DNVOCMP_POSIX_MUTEX
+            -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM0
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
+            -DFREERTOS
+            -DNVOCMP_POSIX_MUTEX
             -gdwarf-3
             -mcpu=cortex-m0plus
             -march=thumbv6m
@@ -83,11 +81,6 @@
             --diag_wrap=off
             --display_error_number
             -x
-            --diag_suppress=16002-D
-            --diag_suppress=10247-D
-            --diag_suppress=10325-D
-            --diag_suppress=10229-D
-            --diag_suppress=16032-D
             -c
             -L${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
             -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/spiffs/lib/ticlang/m0p/spiffs.a
@@ -121,27 +114,7 @@
         </file>
         <file path="../../app/app_main.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
-        <file path="../../app/app_main.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
         <file path="../../app/app_menu.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_broadcaster.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_peripheral.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_observer.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_central.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_connection.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_data.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/app_pairing.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
-        </file>
-        <file path="../../app/Profiles/app_simple_gatt.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
-        </file>
-        <file path="../../app/Profiles/app_dev_info.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/ble_app_util/inc/bleapputil_api.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil/inc">
         </file>
@@ -153,13 +126,7 @@
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/ble_app_util/src/bleapputil_stack_callbacks.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
-        </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
-        </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/simple_gatt">
-        </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/simple_gatt">
+        <file path="../../app/Profiles/app_dev_info.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/services/dev_info/dev_info_service.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/dev_info">
         </file>
@@ -193,6 +160,10 @@
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src/inc/icall_user_config.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
         </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/app/ble_stack_api.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/inc/ble_stack_api.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
+        </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/app/ble_user_config.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/inc/ble_user_config.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
@@ -201,19 +172,41 @@
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/inc/icall_ble_apimsg.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/app/ble_stack_api.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
+        <file path="../../app/app_main.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/inc/ble_stack_api.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
+        <file path="../../app/app_broadcaster.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_peripheral.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_observer.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_central.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_connection.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_pairing.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_data.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
+        </file>
+        <file path="../../app/Profiles/app_simple_gatt.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/simple_gatt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/simple_gatt">
+        </file>
+        <file path="../../freertos/basic_ble.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src/icall_POSIX.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
         </file>
         <file path="../../common/Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../freertos/basic_ble.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
         <file path="../../freertos/ticlang/cc23x0_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/rcl_settings_ble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Startup">
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5/rcl_settings_ble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Startup">
         </file>
     </project>
 </projectSpec>

@@ -55,7 +55,6 @@
             @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/factory_config.opt
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/inc
             -DCC23X0
-            -DDeviceFamily_CC23X0R5
             -DNVOCMP_NWSAMEITEM=1
             -DFLASH_ONLY_BUILD
             -DUSE_RCL
@@ -65,11 +64,10 @@
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/include
-             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/include
-             -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM0
-             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
-             -DFREERTOS
-             -DNVOCMP_POSIX_MUTEX
+            -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM0
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
+            -DFREERTOS
+            -DNVOCMP_POSIX_MUTEX
             -gdwarf-3
             -mcpu=cortex-m0plus
             -march=thumbv6m
@@ -80,11 +78,6 @@
             --diag_wrap=off
             --display_error_number
             -x
-            --diag_suppress=16002-D
-            --diag_suppress=10247-D
-            --diag_suppress=10325-D
-            --diag_suppress=10229-D
-            --diag_suppress=16032-D
             -c
             -L${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
             -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/spiffs/lib/ticlang/m0p/spiffs.a
@@ -126,9 +119,9 @@
         </file>
         <file path="../../Tools/Defines/host_test.opt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Tools/Defines">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Application">
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Application">
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/crc.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
         </file>
@@ -324,7 +317,7 @@
         </file>
         <file path="../../freertos/ticlang/cc23x0_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/rcl_settings_ble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Startup">
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5/rcl_settings_ble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Startup">
         </file>
     </project>
 </projectSpec>

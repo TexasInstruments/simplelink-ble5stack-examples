@@ -163,18 +163,9 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
     {
       // TODO: Call Error Handler
     }
+    // initate profiles and device info
+    init_profiles();
 
-    status = DevInfo_start();
-    if ( status != SUCCESS  )
-    {
-      // TODO: Call Error Handler
-    }
-
-    status = CGM_start();
-    if ( status != SUCCESS  )
-    {
-      // TODO: Call Error Handler
-    }
 #endif
 }
 

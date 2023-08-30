@@ -19,6 +19,7 @@ $Release Date: PACKAGE RELEASE DATE $
 //*****************************************************************************
 //! Includes
 //*****************************************************************************
+#include <string.h>
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
 #include <ti/bleapp/menu_module/menu_module.h>
 #include <app_main.h>
@@ -105,6 +106,31 @@ void Pairing_pairStateHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
                               "status = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
                               ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle,
                               ((BLEAppUtil_PairStateData_t *)pMsgData)->status);
+
+            // The pairing is completed, so update the entry in connection list
+            // to the ID address instead of the RP address
+            linkDBInfo_t linkInfo;
+            // Get the list of connected devices
+            App_connInfo* connList = Connection_getConnList();
+            if (linkDB_GetInfo(((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle, &linkInfo) == SUCCESS)
+            {
+              // If the peer was using private address, update with ID address
+              if ((linkInfo.addrType == ADDRTYPE_PUBLIC_ID ||
+                   linkInfo.addrType == ADDRTYPE_RANDOM_ID) &&
+                   !osal_isbufset(linkInfo.addrPriv, 0, B_ADDR_LEN))
+              {
+
+                // Get the index of connection list by connHandle
+                uint8_t connIdx = Connection_getConnIndex(((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle);
+
+                // Verify that there is a match of connection handle
+                if (connIdx != LL_INACTIVE_CONNECTIONS)
+                {
+                  // Update the connection list with the ID address
+                  memcpy(connList[connIdx].peerAddress, linkInfo.addr, B_ADDR_LEN);
+                }
+              }
+            }
             break;
         }
 

@@ -149,11 +149,11 @@ void Menu_scanStartCB(uint8 index)
     const BLEAppUtil_ScanStart_t centralScanStartParams =
     {
         /*! Zero for continuously scanning */
-        .scanPeriod     = 0, /* Units of 1.28sec */
+        .scanPeriod     = DEFAULT_SCAN_PERIOD, /* Units of 1.28sec */
 
         /*! Scan Duration shall be greater than to scan interval,*/
         /*! Zero continuously scanning. */
-        .scanDuration   = 1000, /* Units of 10ms */
+        .scanDuration   = DEFAULT_SCAN_DURATION, /* Units of 10ms */
 
         /*! If non-zero, the list of advertising reports will be */
         /*! generated and come with @ref GAP_EVT_SCAN_DISABLED.  */

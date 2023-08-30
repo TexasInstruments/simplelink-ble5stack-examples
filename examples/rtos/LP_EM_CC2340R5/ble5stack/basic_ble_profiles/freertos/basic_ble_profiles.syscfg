@@ -109,13 +109,14 @@ for(var setting in bleCcfgSettings)
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x00005000;
-FreeRTOS.timerStackSize       = 0x00000180;
-FreeRTOS.idleStackSize        = 0x00000100;
+FreeRTOS.heapSize             = 0x000044B0;
+FreeRTOS.timerStackSize       = 0x00000190;
+FreeRTOS.idleStackSize        = 0x00000130;
 
 /* ======== BLE ======== */
 var ble = scripting.addModule("/ti/ble5stack/ble");
 ble.deviceRole = "PERIPHERAL_CFG";
+ble.basicBLE = true;
 ble.disDevBySerUuid = true;
 ble.maxConnNum = 1;
 ble.deviceName = "Basic BLE project";
@@ -138,51 +139,4 @@ ble.advSet1.scanRes1.minConnInterval = 100;
 ble.advSet1.scanRes1.maxConnInterval = 130;
 // TX Power Level
 ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
-
-/*
- * Copyright (c) 2018, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- *  cgm.syscfg
- */
-
-/* ======== BLE ======== */
-ble.deviceName = "CGM Profile";
-
-// update more 16-bit UUIDs
-ble.advSet1.advData1.UUID016More = 6175;
-
-// update max Number of PDUs to 100
-ble.maxPDUNum = 100;
-
-// update max PDU size to 27
-ble.maxPDUSize = 27;
+ble.dupFilter = "SCAN_FLT_DUP_DISABLE";

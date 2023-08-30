@@ -151,8 +151,8 @@ void Connection_ConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
             linkDBInfo_t linkInfo;
             if (linkDB_GetInfo(pPkt->connectionHandle, &linkInfo) ==  SUCCESS)
             {
-
-              if(pPkt->status == SUCCESS)
+              // The status HCI_ERROR_CODE_PARAM_OUT_OF_MANDATORY_RANGE indicates that connection params did not change but the req and rsp still transpire
+              if((pPkt->status == SUCCESS) || (pPkt->status == HCI_ERROR_CODE_PARAM_OUT_OF_MANDATORY_RANGE))
               {
                   MenuModule_printf(APP_MENU_CONN_EVENT, 0, "Conn status: Params update - "
                                     "connectionHandle = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
@@ -161,7 +161,7 @@ void Connection_ConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
               else
               {
                   MenuModule_printf(APP_MENU_CONN_EVENT, 0, "Conn status: Params update failed - "
-                                    MENU_MODULE_COLOR_YELLOW "0x%h " MENU_MODULE_COLOR_RESET
+                                    MENU_MODULE_COLOR_YELLOW "0x%x " MENU_MODULE_COLOR_RESET
                                     "connectionHandle = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
                                     pPkt->opcode, pPkt->connectionHandle);
               }
@@ -400,6 +400,29 @@ bStatus_t Connection_start()
     }
 
     return status;
+}
+
+/*********************************************************************
+ * @fn      Connection_getConnIndex
+ *
+ * @brief   Find index in the connected device list by connHandle
+ *
+ * @return  the index of the entry that has the given connection handle.
+ *          if there is no match, LL_INACTIVE_CONNECTIONS will be returned.
+ */
+uint16_t Connection_getConnIndex(uint16_t connHandle)
+{
+  uint8_t i;
+
+  for (i = 0; i < MAX_NUM_BLE_CONNS; i++)
+  {
+    if (connectionConnList[i].connHandle == connHandle)
+    {
+      return i;
+    }
+  }
+
+  return LL_INACTIVE_CONNECTIONS;
 }
 
 #endif // ( HOST_CONFIG & (CENTRAL_CFG | PERIPHERAL_CFG) )

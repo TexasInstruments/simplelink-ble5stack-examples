@@ -33,7 +33,7 @@ BLEAppUtil_GeneralParams_t appMainParams =
 {
     .taskPriority = 1,
     .taskStackSize = 1024,
-    .profileRole = (BLEAppUtil_Profile_Roles_e)HOST_CONFIG,
+    .profileRole = (BLEAppUtil_Profile_Roles_e)(HOST_CONFIG),
     .addressMode = DEFAULT_ADDRESS_MODE,
     .deviceNameAtt = attDeviceName,
 };

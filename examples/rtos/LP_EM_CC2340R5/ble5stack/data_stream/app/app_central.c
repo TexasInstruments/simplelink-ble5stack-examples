@@ -73,55 +73,53 @@ BLEAppUtil_ConnectParams_t centralConnParams =
 const BLEAppUtil_ScanInit_t centralScanInitParams =
 {
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .primPhy                    = SCAN_PRIM_PHY_1M,
+    .primPhy                    = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_TYPE_ACTIVE | SCAN_TYPE_PASSIVE */
-    .scanType                   = SCAN_TYPE_ACTIVE,
+    .scanType                   = DEFAULT_SCAN_TYPE,
 
     /*! Scan interval shall be greater than or equal to scan window */
-    .scanInterval               = 800, /* Units of 625 us */
+    .scanInterval               = DEFAULT_SCAN_INTERVAL, /* Units of 625 us */
 
     /*! Scan window shall be less than or equal to scan interval */
-    .scanWindow                 = 800, /* Units of 625 us */
+    .scanWindow                 = DEFAULT_SCAN_WINDOW, /* Units of 625 us */
 
     /*! Select which fields of an advertising report will be stored */
     /*! in the AdvRptList, For mor field see @ref Gap_scanner.h     */
-    .advReportFields            = SCAN_ADVRPT_FLD_ADDRESS |
-                                  SCAN_ADVRPT_FLD_ADDRTYPE,
+    .advReportFields            = ADV_RPT_FIELDS,
 
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .scanPhys                   = SCAN_PRIM_PHY_1M,
+    .scanPhys                   = DEFAULT_SCAN_PHY,
 
-    /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_WL |   */
-    /*! SCAN_FLT_POLICY_ALL_RPA | SCAN_FLT_POLICY_WL_RPA */
-    .fltPolicy                  = SCAN_FLT_POLICY_ALL,
+    /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_AL |   */
+    /*! SCAN_FLT_POLICY_ALL_RPA | SCAN_FLT_POLICY_AL_RPA */
+    .fltPolicy                  = SCANNER_FILTER_POLICY,
 
     /*! For more filter PDU @ref Gap_scanner.h */
-    .fltPduType                 = SCAN_FLT_PDU_CONNECTABLE_ONLY |
-                                  SCAN_FLT_PDU_COMPLETE_ONLY,
+    .fltPduType                 = SCANNER_FILTER_PDU_TYPE,
 
     /*! Opt SCAN_FLT_RSSI_ALL | SCAN_FLT_RSSI_NONE */
-    .fltMinRssi                 = SCAN_FLT_RSSI_ALL,
+    .fltMinRssi                 = SCANNER_FILTER_MIN_RSSI,
 
     /*! Opt SCAN_FLT_DISC_NONE | SCAN_FLT_DISC_GENERAL | SCAN_FLT_DISC_LIMITED
      *  | SCAN_FLT_DISC_ALL | SCAN_FLT_DISC_DISABLE */
-    .fltDiscMode                = SCAN_FLT_DISC_DISABLE,
+    .fltDiscMode                = SCANNER_FILTER_DISC_MODE,
 
     /*! Opt SCAN_FLT_DUP_ENABLE | SCAN_FLT_DUP_DISABLE | SCAN_FLT_DUP_RESET */
-    .fltDup                     = SCAN_FLT_DUP_ENABLE,
+    .fltDup                     = SCANNER_DUPLICATE_FILTER
 };
 
 const BLEAppUtil_ConnParams_t centralConnInitParams =
 {
      /*! Opt INIT_PHY_ALL | INIT_PHY_1M | INIT_PHY_2M | INIT_PHY_CODED */
-    .initPhys              = INIT_PHY_1M,
+    .initPhys              = DEFAULT_INIT_PHY,
 
-    .scanInterval          = 16,   /* Units of 0.625ms */
-    .scanWindow            = 16,   /* Units of 0.625ms */
-    .minConnInterval       = 80,   /* Units of 1.25ms */
-    .maxConnInterval       = 80,   /* Units of 1.25ms */
-    .connLatency           = 0,
-    .supTimeout            = 2000  /* Units of 10ms */
+    .scanInterval          = INIT_PHYPARAM_SCAN_INT,      /* Units of 0.625ms */
+    .scanWindow            = INIT_PHYPARAM_SCAN_WIN,      /* Units of 0.625ms */
+    .minConnInterval       = INIT_PHYPARAM_MIN_CONN_INT,  /* Units of 1.25ms  */
+    .maxConnInterval       = INIT_PHYPARAM_MAX_CONN_INT,  /* Units of 1.25ms  */
+    .connLatency           = INIT_PHYPARAM_CONN_LAT,
+    .supTimeout            = INIT_PHYPARAM_SUP_TO         /* Units of 10ms */
 };
 
 static App_scanResults centralScanRes[APP_MAX_NUM_OF_ADV_REPORTS];

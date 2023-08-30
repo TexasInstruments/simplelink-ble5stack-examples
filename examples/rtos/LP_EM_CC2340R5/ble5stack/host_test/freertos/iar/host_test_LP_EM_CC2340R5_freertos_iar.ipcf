@@ -46,27 +46,26 @@
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/posix/iar</path>
         <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/include</path>
+        <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/portable/IAR/ARM_CM0</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos</path>
     </includePath>
 
     <defines>
         <define>CC23X0</define>
-        <define>DeviceFamily_CC23X0R5</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
         <define>USE_RCL</define>
+        <define>FREERTOS</define>
+        <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
 
     <extraOptions>
         <args>
+            <arg>-f$PROJ_DIR$/ti_utils_build_compiler.opt</arg>
             <arg>-f$PROJ_DIR$/Tools/build_config.opt</arg>
             <arg>-f$PROJ_DIR$/Tools/Defines/host_test.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/build_components.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/factory_config.opt</arg>
-            <arg> -I$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/include</arg>
-            <arg> -I$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/portable/IAR/ARM_CM0</arg>
-            <arg> -I$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos</arg>
-            <arg> -DFREERTOS</arg>
-            <arg> -DNVOCMP_POSIX_MUTEX</arg>
             <arg>--debug</arg>
             <arg>--silent</arg>
             <arg>-e</arg>
@@ -138,8 +137,10 @@
             <path copyTo="$PROJ_DIR$/Application/host_test_app.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/Application/host_test_app.h</path>
             <path copyTo="$PROJ_DIR$/Application/Queue_freertos.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/Application/Queue_freertos.c</path>
             <path copyTo="$PROJ_DIR$/Application/Queue_freertos.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/Application/Queue_freertos.h</path>
-            <path reference="$PROJ_DIR$/Application/util.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.c</path>
-            <path reference="$PROJ_DIR$/Application/util.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.h</path>
+        </group>
+        <group name="common/Util" build="true">
+            <path reference="$PROJ_DIR$/common/Util/util.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.c</path>
+            <path reference="$PROJ_DIR$/common/Util/util.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.h</path>
         </group>
         <group name="Drivers/NV" build="true">
             <path reference="$PROJ_DIR$/Drivers/NV/crc.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/nv/crc.c</path>
@@ -272,7 +273,7 @@
         </group>
         <group name="Startup" build="true">
             <path copyTo="$PROJ_DIR$/Startup/osal_icall_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/Startup/osal_icall_ble.c</path>
-            <path reference="$PROJ_DIR$/Startup/rcl_settings_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/rcl_settings_ble.c</path>
+            <path reference="$PROJ_DIR$/Startup/rcl_settings_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5/rcl_settings_ble.c</path>
             <path reference="$PROJ_DIR$/Startup/rom_init.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/rom/agama_r1/rom_init.c</path>
         </group>
         <group name="Tools" build="true">

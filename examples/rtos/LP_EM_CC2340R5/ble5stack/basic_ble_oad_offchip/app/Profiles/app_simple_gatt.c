@@ -85,13 +85,13 @@ static void SimpleGatt_changeCB( uint8_t paramId )
       break;
     case SIMPLEGATTPROFILE_CHAR4:
       {
-        // Print Notification registration to user
-        MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
-                                              "Char 4 = Notification registration");
+          // Print Notification registration to user
+          MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
+                                    "Char 4 = Notification registration");
 
-        SimpleGatt_notifyChar4();
+          SimpleGatt_notifyChar4();
+          break;
       }
-      break;
     default:
       // should not reach here!
       break;
