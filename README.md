@@ -118,22 +118,7 @@ Follow the instructions in your respective SDK's Quick Start Guide:
 * [SimpleLink Low Power F2 SDK Quick Start Guide](https://dev.ti.com/tirex/explore/node?node=A__AC7UNBWx3i6iMAUzzhqKwA__com.ti.SIMPLELINK_CC13XX_CC26XX_SDK__BSEc4rl__LATEST)
 * [SimpleLink Low Power F3 SDK Quick Start Guide](https://dev.ti.com/tirex/explore/node?node=A__AC7UNBWx3i6iMAUzzhqKwA__com.ti.SIMPLELINK_LOWPOWER_F3_SDK__58mgN04__LATEST)
 
-## Troubleshooting
 
-When building on *nix platform (Linux/Mac) the library build may fail with an
-error similar to:
-
-```bash
-error: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib: Unsupported triple for mach-o cpu type: thumbv6m-ti-none-eabi
-```
-
-To fix, make sure the arm version of ranlib is in the path before the OS version
-of ranlib located in /usr/bin. Simply set the location of the gcc ARM ranlib
-ahead in the shell's path.  Example:
-
-```bash
-$ export PATH=/Users/username/ti/gcc_arm_none_eabi_9_2_1/arm-none-eabi/bin:$PATH
-```
 
 ## SDK Association
 
