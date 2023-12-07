@@ -309,7 +309,8 @@ SECTIONS
      _net_buf_pool_list = .;
    } > NET_BUF_SRAM
 
-   ._net_buf_pool.static.*  : > NET_BUF_SRAM
+  ._net_buf_pool.static.adv_buf_pool : > NET_BUF_SRAM
+  ._net_buf_pool.static.loopback_buf_pool : >> NET_BUF_SRAM
 
   Z_ITERABLE_SECTION_ROM(bt_mesh_app_key_cb, 4)
   Z_ITERABLE_SECTION_ROM(bt_mesh_friend_cb, 4)
