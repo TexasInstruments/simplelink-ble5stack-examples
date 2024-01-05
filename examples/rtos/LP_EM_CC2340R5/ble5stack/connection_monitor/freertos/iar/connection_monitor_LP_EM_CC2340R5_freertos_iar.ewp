@@ -635,8 +635,13 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                </buildActions>
             </data>
         </settings>
         <settings>
@@ -1597,8 +1602,13 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                </buildActions>
             </data>
         </settings>
         <settings>

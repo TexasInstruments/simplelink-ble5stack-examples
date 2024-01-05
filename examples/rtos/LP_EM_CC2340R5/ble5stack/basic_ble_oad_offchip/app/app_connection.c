@@ -6,13 +6,43 @@
 the help of BLEAppUtil APIs.
 
 Group: WCS, BTS
-$Target Device: DEVICES $
+Target Device: cc23xx
 
 ******************************************************************************
-$License: BSD3 2022 $
+
+ Copyright (c) 2022-2023, Texas Instruments Incorporated
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ *  Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+ *  Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+ *  Neither the name of Texas Instruments Incorporated nor the names of
+    its contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ******************************************************************************
-$Release Name: PACKAGE NAME $
-$Release Date: PACKAGE RELEASE DATE $
+
+
 *****************************************************************************/
 #if ( HOST_CONFIG & ( CENTRAL_CFG | PERIPHERAL_CFG ) )
 
@@ -152,7 +182,7 @@ void Connection_ConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
             if (linkDB_GetInfo(pPkt->connectionHandle, &linkInfo) ==  SUCCESS)
             {
               // The status HCI_ERROR_CODE_PARAM_OUT_OF_MANDATORY_RANGE indicates that connection params did not change but the req and rsp still transpire
-              if((pPkt->status == SUCCESS) || (pPkt->status == HCI_ERROR_CODE_PARAM_OUT_OF_MANDATORY_RANGE))
+              if(pPkt->status == SUCCESS)
               {
                   MenuModule_printf(APP_MENU_CONN_EVENT, 0, "Conn status: Params update - "
                                     "connectionHandle = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,

@@ -62,21 +62,18 @@
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/cc26xx
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src
-            @${PROJECT_LOC}/${ConfigName}/syscfg/ti_ble_app_config.opt
-            @${PROJECT_LOC}/${ConfigName}/syscfg/ti_build_config.opt
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/health_thermometer
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/services/health_thermometer
             @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/build_components.opt
             @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/factory_config.opt
             -DCC23X0
             -DNVOCMP_NWSAMEITEM=1
             -DFLASH_ONLY_BUILD
             -DUSE_RCL
-            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/devices/cc23x0r5
-            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/devices/cc23x0r5/settings
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl
-            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
-            -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/include
-            -I${FREERTOS_INSTALL_DIR}/FreeRTOS/Source/portable/GCC/ARM_CM0
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/include
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/portable/GCC/ARM_CM0
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
             -DFREERTOS
             -DNVOCMP_POSIX_MUTEX
@@ -86,32 +83,25 @@
             -mfloat-abi=soft
         "
         linkerBuildOptions="
-            --define=APP_HDR_ADDR=0x32000
-            --define=OAD_APP_ONCHIP=1
-            --diag_wrap=off
-            --display_error_number
-            -x
-            -c
+            -Wl,--define=APP_HDR_ADDR=0x32000
+            -Wl,--define=OAD_APP_ONCHIP=1
+            -Wl,--diag_wrap=off
+            -Wl,--display_error_number
+            -Wl,-x
+            -Wl,-c
             -L${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/spiffs/lib/ticlang/m0p/spiffs.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl/lib/ticlang/m0p/rcl_cc23x0r5.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/lib/ticlang/m0p/drivers_cc23x0r5.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/display/lib/ticlang/m0p/display_cc23x0r5.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/ecc/lib/ticlang/m0p/ecc.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/devices/cc23x0r5/rf_patches/lib/ticlang/lrf_cc23x0r5.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/lib_projects/CC2340R5/OneLib/lib/ticlang/m0p/OneLib.a
-            -l${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/lib_projects/CC2340R5/StackWrapper/lib/ticlang/m0p/StackWrapper.a
             -L${PROJECT_BUILD_DIR}/syscfg
-            -lti/devices/cc23x0r5/driverlib/lib/ticlang/driverlib.a
+            -lti_utils_build_linker.cmd.genlibs
             -Wl,--rom_model
             -Wl,--warn_sections
             -L${CG_TOOL_ROOT}/lib
             -llibc.a
         "
         postBuildStep="
-            ${CG_TOOL_ROOT}/bin/tiarmobjcopy ${ProjName}.out --output-target binary ${ProjName}_noheader.bin --remove-section=.ccfg;;
-            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x4A000 --version 1.0.0 --pad-header --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${ProjName}_noheader.bin ${ProjName}_v1.bin;;
-            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x4A000 --version 2.0.0 --pad-header --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${ProjName}_noheader.bin ${ProjName}_v2.bin
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileName} ${BuildArtifactFileBaseName}.hex;
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy ${BuildArtifactFileBaseName}.out --output-target binary ${BuildArtifactFileBaseName}_noheader.bin --remove-section=.ccfg;
+            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x4A000 --version 1.0.0 --pad-header --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${BuildArtifactFileBaseName}_noheader.bin ${BuildArtifactFileBaseName}_v1.bin;
+            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x4A000 --version 2.0.0 --pad-header --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${BuildArtifactFileBaseName}_noheader.bin ${BuildArtifactFileBaseName}_v2.bin
         "
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -235,8 +225,6 @@
         <file path="../../common/Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../freertos/ticlang/cc23x0_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/cc23x0r5/rcl_settings_ble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Startup">
         </file>
     </project>
 </projectSpec>

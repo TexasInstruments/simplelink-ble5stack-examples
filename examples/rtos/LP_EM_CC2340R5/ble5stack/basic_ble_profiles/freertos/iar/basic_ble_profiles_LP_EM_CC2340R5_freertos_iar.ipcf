@@ -38,13 +38,12 @@
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/nv</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/common/cc26xx</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/icall/src</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5/settings</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/rcl</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/posix/iar</path>
-        <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/include</path>
-        <path>$FREERTOS_INSTALL_DIR$/FreeRTOS/Source/portable/IAR/ARM_CM0</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/freertos/include</path>
+        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/freertos/portable/IAR/ARM_CM0</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos</path>
     </includePath>
 
@@ -61,8 +60,6 @@
     <extraOptions>
         <args>
             <arg>-f$PROJ_DIR$/ti_utils_build_compiler.opt</arg>
-            <arg>-f$PROJ_DIR$/ti_ble_app_config.opt</arg>
-            <arg>-f$PROJ_DIR$/ti_build_config.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/build_components.opt</arg>
             <arg>-f$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/config/factory_config.opt</arg>
             <arg>--debug</arg>
@@ -84,18 +81,9 @@
             <arg>--keep __vector_table</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/spiffs/lib/iar/m0p/spiffs.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/lib/iar/m0p/drivers_cc23x0r5.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/rcl/lib/iar/m0p/rcl_cc23x0r5.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/display/lib/iar/m0p/display_cc23x0r5.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/devices/cc23x0r5/rf_patches/lib/iar/lrf_cc23x0r5.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/ecc/lib/iar/m0p/ecc.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel/freertos/lib/iar/m0p/freertos.a</arg>
             <arg>--config_def PAGE_ALIGN=-1</arg>
             <arg>--threaded_lib</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/lib_projects/CC2340R5/OneLib/lib/iar/m0p/OneLib.a</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/lib_projects/CC2340R5/StackWrapper/lib/iar/m0p/StackWrapper.a</arg>
-            <arg>ti/devices/cc23x0r5/driverlib/lib/iar/driverlib.a</arg>
+            <arg>-f$PROJ_DIR$/ti_utils_build_linker.cmd.genlibs</arg>
             <arg>--silent</arg>
         </args>
     </linkerExtraOptions>
@@ -146,6 +134,7 @@
             <path copyTo="$PROJ_DIR$/app/Profiles/app_cgm.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/app/Profiles/app_cgm.c</path>
             <path copyTo="$PROJ_DIR$/app/Profiles/app_dev_info.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/app/Profiles/app_dev_info.c</path>
             <path copyTo="$PROJ_DIR$/app/Profiles/app_glucose.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/app/Profiles/app_glucose.c</path>
+            <path copyTo="$PROJ_DIR$/app/Profiles/app_ht.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/app/Profiles/app_ht.c</path>
             <path copyTo="$PROJ_DIR$/app/Profiles/app_simple_gatt.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/app/Profiles/app_simple_gatt.c</path>
         </group>
         <group name="common/BLEAppUtil" build="true">
@@ -197,6 +186,10 @@
             <path reference="$PROJ_DIR$/common/Profiles/glucose/glucose_profile.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/glucose/glucose_profile.c</path>
             <path reference="$PROJ_DIR$/common/Profiles/glucose/glucose_profile.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/glucose/glucose_profile.h</path>
         </group>
+        <group name="common/Profiles/health_thermometer" build="true">
+            <path reference="$PROJ_DIR$/common/Profiles/health_thermometer/health_thermometer_profile.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer/health_thermometer_profile.c</path>
+            <path reference="$PROJ_DIR$/common/Profiles/health_thermometer/health_thermometer_profile.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer/health_thermometer_profile.h</path>
+        </group>
         <group name="common/Profiles/simple_gatt" build="true">
             <path reference="$PROJ_DIR$/common/Profiles/simple_gatt/simple_gatt_profile.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.c</path>
             <path reference="$PROJ_DIR$/common/Profiles/simple_gatt/simple_gatt_profile.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h</path>
@@ -213,6 +206,10 @@
             <path reference="$PROJ_DIR$/common/Services/glucose/glucose_server.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/glucose/glucose_server.c</path>
             <path reference="$PROJ_DIR$/common/Services/glucose/glucose_server.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/glucose/glucose_server.h</path>
         </group>
+        <group name="common/Services/health_thermometer" build="true">
+            <path reference="$PROJ_DIR$/common/Services/health_thermometer/health_thermometer_server.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer/health_thermometer_server.c</path>
+            <path reference="$PROJ_DIR$/common/Services/health_thermometer/health_thermometer_server.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer/health_thermometer_server.h</path>
+        </group>
         <group name="common/Startup" build="true">
             <path reference="$PROJ_DIR$/common/Startup/ble_user_config_stack.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/icall/stack/ble_user_config_stack.c</path>
             <path copyTo="$PROJ_DIR$/common/Startup/osal_icall_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_profiles/common/Startup/osal_icall_ble.c</path>
@@ -221,9 +218,6 @@
         <group name="common/Util" build="true">
             <path reference="$PROJ_DIR$/common/Util/util.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.c</path>
             <path reference="$PROJ_DIR$/common/Util/util.h">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/util.h</path>
-        </group>
-        <group name="Startup" build="true">
-            <path reference="$PROJ_DIR$/Startup/rcl_settings_ble.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/boards/cc23x0r5/rcl_settings_ble.c</path>
         </group>
     </files>
 </iarProjectConnection>

@@ -85,12 +85,30 @@ nvs.internalFlash.regionBase   = 0x7C000;
 nvs.internalFlash.regionSize   = 0x4000;
 nvs.$name = "CONFIG_NVSINTERNAL";
 
+/* ======== RCL ======== */
+const RCL = scripting.addModule("/ti/drivers/RCL");
+
 /* ======== POWER ======== */
 var Power = scripting.addModule("/ti/drivers/Power");
 
 /* ======== RNG ======== */
 var RNG = scripting.addModule("/ti/drivers/RNG");
 var rng = RNG.addInstance();
+
+/* ======== RF Design ======== */
+var rfDesign = scripting.addModule("ti/devices/radioconfig/rfdesign");
+const rfDesignSettings = system.getScript("/ti/common/lprf_rf_design_settings.js").rfDesignSettings;
+for(var setting in rfDesignSettings)
+{
+    rfDesign[setting] = rfDesignSettings[setting];
+}
+
+const radioSettings = system.getScript("/ti/ble5stack/ble_common.js").getRadioScript(rfDesign.rfDesign,system.deviceData.deviceId);
+const bleRfDesignSettings = radioSettings.rfDesignParams;
+for(var setting in bleRfDesignSettings)
+{
+    rfDesign[setting] = bleRfDesignSettings[setting];
+}
 
 /* ======== Device ======== */
 var device = scripting.addModule("ti/devices/CCFG");
@@ -106,10 +124,21 @@ for(var setting in bleCcfgSettings)
     device[setting] = bleCcfgSettings[setting];
 }
 
+/* ======== LEDS ======== */
+const GPIO        = scripting.addModule("/ti/drivers/GPIO");
+
+const GPIO2       = GPIO.addInstance();
+GPIO2.$hardware   = system.deviceData.board.components.LED_GREEN;
+GPIO2.$name       = "CONFIG_GPIO_LED_GREEN";
+
+const GPIO3       = GPIO.addInstance();
+GPIO3.$hardware   = system.deviceData.board.components.LED_RED;
+GPIO3.$name       = "CONFIG_GPIO_LED_RED";
+
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x000044B0;
+FreeRTOS.heapSize             = 0x00005000;
 FreeRTOS.timerStackSize       = 0x00000190;
 FreeRTOS.idleStackSize        = 0x00000130;
 
@@ -139,7 +168,6 @@ ble.advSet1.scanRes1.minConnInterval = 100;
 ble.advSet1.scanRes1.maxConnInterval = 130;
 // TX Power Level
 ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
-ble.dupFilter = "SCAN_FLT_DUP_DISABLE";
 
 /*
  * Copyright (c) 2018, Texas Instruments Incorporated
@@ -176,17 +204,6 @@ ble.dupFilter = "SCAN_FLT_DUP_DISABLE";
 /*
  *  data_stream.syscfg
  */
-
-/* ======== LEDs ======== */
-var GPIO = scripting.addModule("/ti/drivers/GPIO");
-
-var gpio2 = GPIO.addInstance();
-gpio2.$hardware = system.deviceData.board.components.LED_GREEN;
-gpio2.$name = "CONFIG_GPIO_LED_GREEN";
-
-var gpio3 = GPIO.addInstance();
-gpio3.$hardware = system.deviceData.board.components.LED_RED;
-gpio3.$name = "CONFIG_GPIO_LED_RED";
 
 /* ======== BLE ======== */
 ble.deviceRole = "PERIPHERAL_CFG";

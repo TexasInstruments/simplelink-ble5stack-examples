@@ -28,7 +28,120 @@
             <div class ="nav"></div>
 
         </header> <div id="content">
-    <p></p>
+    <h1>Basic Persistent Project</h1>
+
+<h2>Table of Contents</h2>
+
+<ul>
+<li><a href="#Introduction">Introduction</a></li>
+<li><a href="#Hardware_Prerequisites">Hardware Prerequisites</a></li>
+<li><a href="#Software_Prerequisites">Software Prerequisites</a></li>
+<li><a href="#GATT_Profiles">GATT Services</a>
+<ul>
+<li><a href="#OAD_Service">OAD Service</a></li>
+</ul></li>
+<li><a href="#Usage">Usage</a>
+<ul>
+<li><a href="#UART">UART</a></li>
+</ul></li>
+</ul>
+
+<h2><a name="Introduction"></a>Introduction</h2>
+
+<p>The <code>Basic Persistent</code> projects implements a lightweight application that implements the OAD profile.</p>
+
+<p>The application behavior is the same as the basic_ble project, with the exception that OAD service is added. For guidance on the <code>Basic Persistent</code> refer to the OAD section of the <a href="https://dev.ti.com/tirex/explore/node?node=AFX6v43sobHV7V3aGkO78g">BLE5-Stack User's Guide</a>.</p>
+
+<h2><a name="Hardware_Prerequisites"></a>Hardware Prerequisites</h2>
+
+<p>The default <code>Basic Persistent</code> board configuration uses the device's LaunchPad development kit.</p>
+
+<h2><a name="Software_Prerequisites"></a>Software Prerequisites</h2>
+
+<p>For information on what versions of Code Composer Studio and IAR Embedded Workbench to use,
+see the Release Notes file provided in the SDK.
+In addition, please refer to the <a href="https://dev.ti.com/tirex/explore/node?node=AFX6v43sobHV7V3aGkO78g">User's Guide</a> for information on importing this project into your IDE workspace and build/run.</p>
+
+<h2><a name="GATT_Services"></a>GATT Services</h2>
+
+<p>The Basic <code>Basic Persistent</code> project contains the <code>OAD Service</code>.</p>
+
+<h3><a name="OAD_Service"></a>OAD Service</h3>
+
+<p>The <code>OAD service</code> is responsible for receiving and storing an OAD image. It causes the device to jump to the secure bootloader to validate the downloaded user application.
+See OAD service description in the <a href="https://dev.ti.com/tirex/explore/node?node=AFX6v43sobHV7V3aGkO78g">BLE5-Stack User's Guide</a> for more information on the OAD service.</p>
+
+<table>
+<thead>
+<tr>
+  <th>Name</th>
+  <th>UUID</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>OAD Service</td>
+  <td>0xFFC0</td>
+  <td>OAD service declaration</td>
+</tr>
+<tr>
+  <td>Image Identify</td>
+  <td>0xFFC1</td>
+  <td>Used to send image image header over the air</td>
+</tr>
+<tr>
+  <td>Image Block Request/Response</td>
+  <td>0xFFC2</td>
+  <td>Actual block of image data along with offset into the image</td>
+</tr>
+<tr>
+  <td>OAD Control</td>
+  <td>0xFFC5</td>
+  <td>Controls various aspects of OAD process</td>
+</tr>
+</tbody>
+</table>
+
+<h3><a name="UART"></a>UART</h3>
+
+<p>This application uses the UART peripheral to provide an interface for the application. The UART is only used for display messages.</p>
+
+<p>We recommend using a terminal program that can parse ANSI/VT100 color codes, such as Tera Term, PuTTY, Code Composer Studio Terminal, etc., to monitor the LaunchPad UART output.</p>
+
+<p>The following default parameters are used for the UART peripheral for
+display:</p>
+
+<table>
+<thead>
+<tr>
+  <th>UART Param</th>
+  <th>Default Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Baud Rate</td>
+  <td>115200</td>
+</tr>
+<tr>
+  <td>Data length</td>
+  <td>8 bits</td>
+</tr>
+<tr>
+  <td>Parity</td>
+  <td>None</td>
+</tr>
+<tr>
+  <td>Stop bits</td>
+  <td>1 bit</td>
+</tr>
+<tr>
+  <td>Flow Control</td>
+  <td>None</td>
+</tr>
+</tbody>
+</table>
 
     </div>
     <footer id="tiFooter">
