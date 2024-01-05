@@ -54,8 +54,6 @@ ecdh.$name = "CONFIG_ECDH0"
 var AESCTRDRBG = scripting.addModule("/ti/drivers/AESCTRDRBG");
 var aesctrdrbg = AESCTRDRBG.addInstance();
 
-
-
 /* ======== Display ======== */
 var Display = scripting.addModule("/ti/display/Display");
 var displayUART = Display.addInstance();
@@ -85,6 +83,9 @@ nvs.internalFlash.regionBase   = 0x70000;
 nvs.internalFlash.regionSize   = 0x1000;
 nvs.$name = "CONFIG_NVSINTERNAL";
 
+/* ======== RCL ======== */
+const RCL = scripting.addModule("/ti/drivers/RCL");
+
 /* ======== POWER ======== */
 var Power = scripting.addModule("/ti/drivers/Power");
 Power.policyFunction = "PowerCC23X0_doWFI";
@@ -92,6 +93,21 @@ Power.policyFunction = "PowerCC23X0_doWFI";
 /* ======== RNG ======== */
 var RNG = scripting.addModule("/ti/drivers/RNG");
 var rng = RNG.addInstance();
+
+/* ======== RF Design ======== */
+var rfDesign = scripting.addModule("ti/devices/radioconfig/rfdesign");
+const rfDesignSettings = system.getScript("/ti/common/lprf_rf_design_settings.js").rfDesignSettings;
+for(var setting in rfDesignSettings)
+{
+    rfDesign[setting] = rfDesignSettings[setting];
+}
+
+const radioSettings = system.getScript("/ti/ble5stack/ble_common.js").getRadioScript(rfDesign.rfDesign,system.deviceData.deviceId);
+const bleRfDesignSettings = radioSettings.rfDesignParams;
+for(var setting in bleRfDesignSettings)
+{
+    rfDesign[setting] = bleRfDesignSettings[setting];
+}
 
 /* ======== Device ======== */
 var device = scripting.addModule("ti/devices/CCFG");

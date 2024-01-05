@@ -635,8 +635,23 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --ihex --checksum __ccfg_boot_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_boot_cfg_crc32_begin-__ccfg_boot_cfg_crc32_end --checksum __ccfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_crc32_begin-__ccfg_crc32_end --checksum __ccfg_user_record_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_user_record_crc32_begin-__ccfg_user_record_crc32_end --checksum __ccfg_debug_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_debug_cfg_crc32_begin-__ccfg_debug_cfg_crc32_end "$TARGET_BPATH$.out" "$TARGET_BPATH$.hex"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --checksum __ccfg_boot_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_boot_cfg_crc32_begin-__ccfg_boot_cfg_crc32_end --checksum __ccfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_crc32_begin-__ccfg_crc32_end --checksum __ccfg_user_record_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_user_record_crc32_begin-__ccfg_user_record_crc32_end --checksum __ccfg_debug_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_debug_cfg_crc32_begin-__ccfg_debug_cfg_crc32_end "$TARGET_BPATH$.out" "$TARGET_BPATH$.out"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                </buildActions>
             </data>
         </settings>
         <settings>
@@ -1597,8 +1612,23 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/tools/ble5stack/cc23r5_iar/cc23r5_iar_postbuild $TARGET_BPATH$ $TARGET_PATH$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --ihex --checksum __ccfg_boot_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_boot_cfg_crc32_begin-__ccfg_boot_cfg_crc32_end --checksum __ccfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_crc32_begin-__ccfg_crc32_end --checksum __ccfg_user_record_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_user_record_crc32_begin-__ccfg_user_record_crc32_end --checksum __ccfg_debug_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_debug_cfg_crc32_begin-__ccfg_debug_cfg_crc32_end "$TARGET_BPATH$.out" "$TARGET_BPATH$.hex"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --checksum __ccfg_boot_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_boot_cfg_crc32_begin-__ccfg_boot_cfg_crc32_end --checksum __ccfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_crc32_begin-__ccfg_crc32_end --checksum __ccfg_user_record_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_user_record_crc32_begin-__ccfg_user_record_crc32_end --checksum __ccfg_debug_cfg_crc32_end+1:4,crc32:1mi,0xFFFFFFFF;__ccfg_debug_cfg_crc32_begin-__ccfg_debug_cfg_crc32_end "$TARGET_BPATH$.out" "$TARGET_BPATH$.out"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                </buildActions>
             </data>
         </settings>
         <settings>
