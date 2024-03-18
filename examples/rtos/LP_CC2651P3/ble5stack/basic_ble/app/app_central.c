@@ -13,11 +13,6 @@ In addition, structures must be provided for scan init parameters,
 scan start and connection init.
 
 In the events handler functions, write what actions are done after each event.
-In this example, When a peer is found (Advertise report), an RSSI check is
-performed, and if the peer is closer than the peer saved as a candidate,
-a candidate replacement is performed. At the end of the scan window, an attempt
-is made to connect to the candidate, and then a rescan after resetting the
-candidate's information.
 
 In the Central_start() function at the bottom of the file, registration,
 initialization and activation are done using the BLEAppUtil API functions,
@@ -30,7 +25,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -75,43 +70,28 @@ Target Device: cc13xx_cc26xx
 
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Prototypes
 //*****************************************************************************
 
 void Central_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
-void Central_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
+void Central_addScanRes(GapScan_Evt_AdvRpt_t *pScanRpt);
+
 //*****************************************************************************
 //! Globals
 //*****************************************************************************
 
 // Events handlers struct, contains the handlers and event masks
 // of the application central role module
-BLEAppUtil_EventHandler_t centralConnHandler =
-{
-    .handlerType    = BLEAPPUTIL_GAP_CONN_TYPE,
-    .pEventHandler  = Central_GAPConnEventHandler,
-    .eventMask      = BLEAPPUTIL_LINK_ESTABLISHED_EVENT |
-                      BLEAPPUTIL_LINK_TERMINATED_EVENT,
-};
-
 BLEAppUtil_EventHandler_t centralScanHandler =
 {
     .handlerType    = BLEAPPUTIL_GAP_SCAN_TYPE,
     .pEventHandler  = Central_ScanEventHandler,
     .eventMask      = BLEAPPUTIL_SCAN_ENABLED |
-                      BLEAPPUTIL_SCAN_DISABLED |
-                      BLEAPPUTIL_ADV_REPORT |
-                      BLEAPPUTIL_SCAN_WND_ENDED
-};
-
-//! Store connection candidate with lowest rssi
-BLEAppUtil_connCandidate_t candidate =
-{
-    .address  = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa },
-    .addrType = 0xFF,
-    .rssi     = 0xFF
+                      BLEAPPUTIL_SCAN_DISABLED
 };
 
 BLEAppUtil_ConnectParams_t centralConnParams =
@@ -123,70 +103,57 @@ BLEAppUtil_ConnectParams_t centralConnParams =
 const BLEAppUtil_ScanInit_t centralScanInitParams =
 {
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .primPhy                    = SCAN_PRIM_PHY_1M,
+    .primPhy                    = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_TYPE_ACTIVE | SCAN_TYPE_PASSIVE */
-    .scanType                   = SCAN_TYPE_ACTIVE,
+    .scanType                   = DEFAULT_SCAN_TYPE,
 
     /*! Scan interval shall be greater than or equal to scan window */
-    .scanInterval               = 800, /* Units of 625 us */
+    .scanInterval               = DEFAULT_SCAN_INTERVAL, /* Units of 625 us */
 
     /*! Scan window shall be less than or equal to scan interval */
-    .scanWindow                 = 800, /* Units of 625 us */
+    .scanWindow                 = DEFAULT_SCAN_WINDOW, /* Units of 625 us */
 
     /*! Select which fields of an advertising report will be stored */
     /*! in the AdvRptList, For mor field see @ref Gap_scanner.h     */
-    .advReportFields            = SCAN_ADVRPT_FLD_ADDRESS |
-                                  SCAN_ADVRPT_FLD_ADDRTYPE,
+    .advReportFields            = ADV_RPT_FIELDS,
 
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .scanPhys                   = SCAN_PRIM_PHY_1M,
+    .scanPhys                   = DEFAULT_SCAN_PHY,
 
-    /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_WL |   */
-    /*! SCAN_FLT_POLICY_ALL_RPA | SCAN_FLT_POLICY_WL_RPA */
-    .fltPolicy                  = SCAN_FLT_POLICY_ALL,
+    /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_AL |   */
+    /*! SCAN_FLT_POLICY_ALL_RPA | SCAN_FLT_POLICY_AL_RPA */
+    .fltPolicy                  = SCANNER_FILTER_POLICY,
 
     /*! For more filter PDU @ref Gap_scanner.h */
-    .fltPduType                 = SCAN_FLT_PDU_CONNECTABLE_ONLY |
-                                  SCAN_FLT_PDU_COMPLETE_ONLY,
+    .fltPduType                 = SCANNER_FILTER_PDU_TYPE,
 
     /*! Opt SCAN_FLT_RSSI_ALL | SCAN_FLT_RSSI_NONE */
-    .fltMinRssi                 = SCAN_FLT_RSSI_ALL,
+    .fltMinRssi                 = SCANNER_FILTER_MIN_RSSI,
 
     /*! Opt SCAN_FLT_DISC_NONE | SCAN_FLT_DISC_GENERAL | SCAN_FLT_DISC_LIMITED
      *  | SCAN_FLT_DISC_ALL | SCAN_FLT_DISC_DISABLE */
-    .fltDiscMode                = SCAN_FLT_DISC_DISABLE,
+    .fltDiscMode                = SCANNER_FILTER_DISC_MODE,
 
     /*! Opt SCAN_FLT_DUP_ENABLE | SCAN_FLT_DUP_DISABLE | SCAN_FLT_DUP_RESET */
-    .fltDup                     = SCAN_FLT_DUP_ENABLE,
-};
-
-const BLEAppUtil_ScanStart_t centralScanStartParams =
-{
-    /*! Zero for continuously scanning */
-    .scanPeriod     = 0, /* Units of 1.28sec */
-
-    /*! Scan Duration shall be greater than to scan interval,*/
-    /*! Zero continuously scanning. */
-    .scanDuration   = 0, /* Units of 10ms */
-
-    /*! If non-zero, the list of advertising reports will be */
-    /*! generated and come with @ref GAP_EVT_SCAN_DISABLED.  */
-    .maxNumReport   = 0
+    .fltDup                     = SCANNER_DUPLICATE_FILTER
 };
 
 const BLEAppUtil_ConnParams_t centralConnInitParams =
 {
      /*! Opt INIT_PHY_ALL | INIT_PHY_1M | INIT_PHY_2M | INIT_PHY_CODED */
-    .initPhys                   = INIT_PHY_1M,
+    .initPhys              = DEFAULT_INIT_PHY,
 
-    .scanInterval          = 16,   /* Units of 0.625ms */
-    .scanWindow            = 16,   /* Units of 0.625ms */
-    .minConnInterval       = 80,   /* Units of 1.25ms */
-    .maxConnInterval       = 80,   /* Units of 1.25ms */
-    .connLatency           = 0,
-    .supTimeout            = 2000  /* Units of 10ms */
+    .scanInterval          = INIT_PHYPARAM_SCAN_INT,      /* Units of 0.625ms */
+    .scanWindow            = INIT_PHYPARAM_SCAN_WIN,      /* Units of 0.625ms */
+    .minConnInterval       = INIT_PHYPARAM_MIN_CONN_INT,  /* Units of 1.25ms  */
+    .maxConnInterval       = INIT_PHYPARAM_MAX_CONN_INT,  /* Units of 1.25ms  */
+    .connLatency           = INIT_PHYPARAM_CONN_LAT,
+    .supTimeout            = INIT_PHYPARAM_SUP_TO         /* Units of 10ms */
 };
+
+static App_scanResults centralScanRes[APP_MAX_NUM_OF_ADV_REPORTS];
+static uint8 centralScanIndex = 0;
 
 //*****************************************************************************
 //! Functions
@@ -197,7 +164,7 @@ const BLEAppUtil_ConnParams_t centralConnInitParams =
  *
  * @brief   The purpose of this function is to handle scan events
  *          that rise from the GAP and were registered in
- *          @ref BLEAppUtil_RegisterGAPEvent
+ *          @ref BLEAppUtil_registerEventHandler
  *
  * @param   event - message event.
  * @param   pMsgData - pointer to message data.
@@ -206,79 +173,42 @@ const BLEAppUtil_ConnParams_t centralConnInitParams =
  */
 void Central_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 {
-    bStatus_t status;
     BLEAppUtil_ScanEventData_t *scanMsg = (BLEAppUtil_ScanEventData_t *)pMsgData;
+
     switch (event)
     {
-        /*! This event happens after detecting peer, an event for each peer */
-        case BLEAPPUTIL_ADV_REPORT:
-        {
-            bleStk_GapScan_Evt_AdvRpt_t *pScanRpt = &scanMsg->pBuf->pAdvReport;
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    GAP_EVT_ADV_REPORT: Discover",
-                           dispIndex); dispIndex++;
-
-            /*! Search for BLE device with lowest rssi */
-            if(pScanRpt->rssi < candidate.rssi)
-            {
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    GAP_EVT_ADV_REPORT:keep candidate, "
-                               "BD address %s, RSSI = %d",
-                               dispIndex,
-                               BLEAppUtil_convertBdAddr2Str(pScanRpt->addr),
-                               pScanRpt->rssi); dispIndex++;
-
-                /*! Store candidate address and address type */
-                candidate.addrType = pScanRpt->addrType;
-                memcpy(&candidate.address, pScanRpt->addr, B_ADDR_LEN);
-                candidate.rssi = pScanRpt->rssi;
-            }
-
-            break;
-        }
-
         case BLEAPPUTIL_SCAN_ENABLED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    GAP_EVT_SCAN_ENABLED: scan discovering...",
-                           dispIndex); dispIndex++;
+            centralScanIndex = 0;
+            MenuModule_printf(APP_MENU_SCAN_EVENT, 0, "Scan status: Scan started...");
 
             break;
         }
 
         case BLEAPPUTIL_SCAN_DISABLED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    GAP_EVT_SCAN_DISABLED: scan done",
-                           dispIndex); dispIndex++;
-            break;
-        }
+            uint8 i;
 
-        /*! Scan window has ended. */
-        case BLEAPPUTIL_SCAN_WND_ENDED:
-        {
-            /*! If a candidate was found try to connect, else continue scan */
-            if(candidate.rssi != 0xFF)
+            for(i = 0; i < APP_MAX_NUM_OF_ADV_REPORTS; i++)
             {
-                /*! Connect to the candidate*/
-
-                centralConnParams.peerAddrType = (GAP_Peer_Addr_Types_t)(candidate.addrType & MASK_ADDRTYPE_ID);
-                memcpy(&centralConnParams.pPeerAddress, candidate.address, B_ADDR_LEN);
-                status = BLEAppUtil_Connect(&centralConnParams);
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    GAP_EVT_SCAN_WND_ENDED: try to connect",
-                               dispIndex); dispIndex++;
-                if(status == SUCCESS)
-                {
-                    candidate.rssi = 0xFF;
-                }
-            }
-            else
-            {
-                status = BLEAppUtil_scanStart(&centralScanStartParams);
-                // TODO: Check status error
+                memset(&centralScanRes[i], 0, sizeof(App_scanResults));
             }
 
+            // Go over the advertise reports that was saved in the host level and save it
+            for (i = 0; i < scanMsg->pBuf->pScanDis.numReport; i++)
+            {
+              GapScan_Evt_AdvRpt_t advReport;
+              // Get the address from the report
+              GapScan_getAdvReport(i, &advReport);
+              // Add the report to the scan list
+              Central_addScanRes(&advReport);
+            }
+
+            MenuModule_printf(APP_MENU_SCAN_EVENT, 0, "Scan status: Scan disabled - "
+                              "Reason: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "Num results: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              scanMsg->pBuf->pScanDis.reason,
+                              scanMsg->pBuf->pScanDis.numReport);
             break;
         }
 
@@ -291,79 +221,37 @@ void Central_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 }
 
 /*********************************************************************
- * @fn      Central_GAPConnEventHandler
+ * @fn      Central_addScanRes
  *
- * @brief   The purpose of this function is to handle connection related
- *          events that rise from the GAP and were registered in
- *          @ref BLEAppUtil_RegisterGAPEvent
+ * @brief   Add a scan result to the scan results list
  *
- * @param   event - message event.
- * @param   pMsgData - pointer to message data.
+ * @param   pScanRpt - the adv report to take the data from
  *
  * @return  none
  */
-void Central_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
+void Central_addScanRes(GapScan_Evt_AdvRpt_t *pScanRpt)
 {
-    switch(event)
+    if(centralScanIndex < APP_MAX_NUM_OF_ADV_REPORTS)
     {
-        case BLEAPPUTIL_LINK_ESTABLISHED_EVENT:
-        {
-            gapEstLinkReqEvent_t *gapEstMsg = (gapEstLinkReqEvent_t *)pMsgData;
-
-            if(gapEstMsg->connRole == BLEAPPUTIL_CENTRAL_ROLE)
-            {
-                /*! Print the peer address and connection handle number */
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    LINK_ESTABLISHED_EVENT: "
-                               "Central role Connected to %s, connectionHandle = %d",
-                               dispIndex,
-                               BLEAppUtil_convertBdAddr2Str(gapEstMsg->devAddr),
-                               gapEstMsg->connectionHandle); dispIndex++;
-
-                /*! Print the number of current connections */
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    LINK_ESTABLISHED_EVENT: "
-                               "Central role Num Conns = %d",
-                               dispIndex,
-                               linkDB_NumActive()); dispIndex++;
-
-                /*! If we not reached the max connections number, start scanning */
-                if(linkDB_NumActive() < linkDB_NumConns())
-                {
-                    BLEAppUtil_scanStart(&centralScanStartParams);
-                }
-            }
-            break;
-        }
-
-        case BLEAPPUTIL_LINK_TERMINATED_EVENT:
-        {
-            gapTerminateLinkEvent_t *gapTermMsg = (gapTerminateLinkEvent_t *)pMsgData;
-
-            /*! Print the connHandle and termination reason */
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    LINK_TERMINATED_EVENT: "
-                           "Central role connectionHandle = %d, reason = %d",
-                           dispIndex,
-                           gapTermMsg->connectionHandle,
-                           gapTermMsg->reason); dispIndex++;
-
-            /*! Print the number of current connections */
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    LINK_TERMINATED_EVENT: "
-                           "Central role Num Conns = %d",
-                           dispIndex,
-                           linkDB_NumActive()); dispIndex++;
-
-            BLEAppUtil_scanStart(&centralScanStartParams);
-            break;
-        }
-
-        default:
-        {
-            break;
-        }
+        centralScanRes[centralScanIndex].addressType = pScanRpt->addrType;
+        memcpy(centralScanRes[centralScanIndex].address, pScanRpt->addr, B_ADDR_LEN);
+        centralScanIndex++;
     }
+}
+
+/*********************************************************************
+ * @fn      Scan_getScanResList
+ *
+ * @brief   Get the scan result list
+ *
+ * @param   scanRes - a scan list pointer
+ *
+ * @return  The number of results in the list
+ */
+uint8 Scan_getScanResList(App_scanResults **scanRes)
+{
+    *scanRes = centralScanRes;
+    return centralScanIndex;
 }
 
 /*********************************************************************
@@ -378,55 +266,31 @@ void Central_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 bStatus_t Central_start()
 {
-    bStatus_t status;
+    bStatus_t status = SUCCESS;
 
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Central_start: Register Handlers",
-                   dispIndex); dispIndex++;
-    // Register the handlers
     status = BLEAppUtil_registerEventHandler(&centralScanHandler);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    status = BLEAppUtil_registerEventHandler(&centralConnHandler);
-    if(status != SUCCESS)
-    {
-        return(status);
-    }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Central_start: Init Scan Params",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_scanInit(&centralScanInitParams);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
 
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Central_start: Set Conn Params",
-                   dispIndex); dispIndex++;
-
-    status = BLEAppUtil_SetConnParams(&centralConnInitParams);
+    status = BLEAppUtil_setConnParams(&centralConnInitParams);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
 
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Central_start: Scan Start",
-                   dispIndex); dispIndex++;
-
-    status = BLEAppUtil_scanStart(&centralScanStartParams);
-    if(status != SUCCESS)
-    {
-        return(status);
-    }
-
-    return SUCCESS;
+    // Return status value
+    return(status);
 }
 
 #endif // ( HOST_CONFIG & ( CENTRAL_CFG ) )

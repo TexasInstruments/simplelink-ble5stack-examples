@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -1451,7 +1451,7 @@ static void RTLSResponder_openL2CAPChanCoc(void)
   if (L2CAP_PsmInfo(RTLS_PSM, &psmInfo) == INVALIDPARAMETER)
   {
     // Prepare the PSM parameters
-    psm.initPeerCredits = 0xFFFF;
+    psm.initPeerCredits = L2CAP_MAX_NOF_CREDITS;
     psm.maxNumChannels = 1;
     psm.mtu = RTLS_PDU_SIZE;
     psm.peerCreditThreshold = 0;
@@ -1487,7 +1487,7 @@ static void RTLSResponder_processL2CAPSignalEvent(l2capSignalEvent_t *pMsg)
         rrConnCB[pMsg->connHandle].cocCID = pEstEvt->CID;
 
         // Give max credits to the other side
-        L2CAP_FlowCtrlCredit(pEstEvt->CID, 0xFFFF);
+        L2CAP_FlowCtrlCredit(pEstEvt->CID, L2CAP_MAX_NOF_CREDITS);
 
         // L2CAP establishing a COC channel means that both Coordinator and Responder are ready
         // Tell RTLS Control that we are ready for more commands

@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2018-2023, Texas Instruments Incorporated
+ Copyright (c) 2018-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -48,31 +48,24 @@
  * INCLUDES
  */
 
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Queue.h>
-
 #include <string.h>
 #include <stdlib.h>
-
-#include <ti/sysbios/BIOS.h>
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/hal/Hwi.h>
-#include <ti/sysbios/knl/Swi.h>
-#include <driverlib/sys_ctrl.h>
-#include <driverlib/ioc.h>
 
 #include "bcomdef.h"
 
 #include <ti_drivers_config.h>
 #include "rtls_host.h"
 #include "rtls_ctrl.h"
+#include "rtls_ctrl_api.h"
 
 #include "npi_data.h"
 #include "npi_task.h"
 #include "npi_util.h"
 
+#ifndef USE_RCL
+#include <driverlib/ioc.h>
+#define NPITask_freeFrameData NPITask_freeFrame
+#endif
 /*********************************************************************
  * MACROS
  */
@@ -103,14 +96,6 @@
  * TYPEDEFS
  */
 
-// uNPI Event
-typedef struct
-{
-  uint16_t    event;     // Which profile's event
-  uint8_t     status;    // New status
-  _npiFrame_t *pNpiMsg;  // Message Received from the Application processor
-} uNpiEvt_t;
-
 /*********************************************************************
  * GLOBAL VARIABLES
  */
@@ -138,6 +123,7 @@ pfnRtlsCtrlProcessMsgCb gRtlsCtrlProcessMsgCb = NULL;
  */
 
 void RTLSHost_processNpiMessage(_npiFrame_t *pNpiMsg);
+uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint8_t *pData, uint16_t dataLen);
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -158,8 +144,13 @@ void RTLSHost_openHostIf(pfnRtlsCtrlProcessMsgCb rtlsAppCb)
   NPITask_Params_init(NPI_SERIAL_TYPE_UART, &npiPortParams);
 
   npiPortParams.stackSize = NPI_TASK_STACK_SIZE;
+#ifdef USE_RCL
+  npiPortParams.mrdyGpioIndex = 0 /*MRDY_GPIO*/;
+  npiPortParams.srdyGpioIndex = 0 /*SRDY_GPIO*/;
+#else
   npiPortParams.mrdyGpioIndex = MRDY_GPIO;
   npiPortParams.srdyGpioIndex = SRDY_GPIO;
+#endif
   npiPortParams.bufSize   = NPI_MSG_BUFF_SIZE;
   npiPortParams.portParams.uartParams.baudRate = 460800;
 
@@ -174,10 +165,77 @@ void RTLSHost_openHostIf(pfnRtlsCtrlProcessMsgCb rtlsAppCb)
 
   gRtlsCtrlProcessMsgCb = (pfnRtlsCtrlProcessMsgCb)rtlsAppCb;
 
-  ASSERT(gRtlsCtrlProcessMsgCb == NULL);
+  if(gRtlsCtrlProcessMsgCb == NULL)
+  {
+      AssertHandler(RTLS_CTRL_ASSERT_CAUSE_NULL_POINTER_EXCEPT, 0);
+  }
 #endif
 }
 
+#ifdef USE_RCL
+uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint8_t *pData, uint16_t dataLen)
+{
+    _npiFrame_t npiMsg;
+
+    // Build and send the NPI message
+    npiMsg.dataLen = dataLen;
+    npiMsg.cmd0 = cmdTypeNpi;
+    npiMsg.cmd1 = cmdId;
+
+    // If we have any data to send
+    if ((pData != NULL) && (0 != dataLen))
+    {
+      npiMsg.pData = NPIUtil_malloc(dataLen);
+      if (NULL != npiMsg.pData)
+      {
+        memcpy(npiMsg.pData, pData, dataLen);
+      }
+    }
+    else
+    {
+      npiMsg.pData = NULL;
+    }
+
+    // Forward npiFrame to uNPI
+    if (NPITask_sendToHost(&npiMsg) != NPI_SUCCESS)
+    {
+      NPITask_freeFrameData(&npiMsg);
+      return FAILURE;
+    }
+    return SUCCESS;
+}
+#else
+uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint8_t *pData, uint16_t dataLen)
+{
+    _npiFrame_t *npiMsg = NULL;
+
+    npiMsg = (_npiFrame_t *)NPIUtil_malloc(sizeof(_npiFrame_t) + dataLen);
+
+    // Build and send the NPI message
+    if (npiMsg != NULL)
+    {
+      npiMsg->dataLen = dataLen;
+      npiMsg->cmd0 = cmdTypeNpi;
+      npiMsg->cmd1 = cmdId;
+
+      // If we have any data to send
+      if ((pData != NULL) && (0 != dataLen))
+      {
+        npiMsg->pData = (uint8_t *)((uint32_t)npiMsg + sizeof(_npiFrame_t));
+        memcpy(npiMsg->pData, pData, dataLen);
+      }
+
+      // Forward npiFrame to uNPI
+      if (NPITask_sendToHost(npiMsg) != NPI_SUCCESS)
+      {
+       NPIUtil_free((uint8_t *)npiMsg);
+
+       return FAILURE;
+      }
+    }
+    return SUCCESS;
+}
+#endif
 /*********************************************************************
  * @fn      RTLSHost_sendMsg
  *
@@ -193,7 +251,6 @@ void RTLSHost_openHostIf(pfnRtlsCtrlProcessMsgCb rtlsAppCb)
 uint8_t RTLSHost_sendMsg(uint8_t cmdId, uint8_t cmdType, uint8_t *pData, uint16_t dataLen)
 {
 #ifdef RTLS_HOST_EXTERNAL
-  _npiFrame_t *npiMsg = NULL;
   uint8_t cmdTypeNpi;
 
   if (cmdId <= RTLS_CMD_BLE_LOG_STRINGS_MAX)
@@ -230,31 +287,7 @@ uint8_t RTLSHost_sendMsg(uint8_t cmdId, uint8_t cmdType, uint8_t *pData, uint16_
       return FAILURE;
   }
 
-  npiMsg = (_npiFrame_t *)NPIUtil_malloc(sizeof(_npiFrame_t) + dataLen);
-
-  // Build and send the NPI message
-  if (npiMsg != NULL)
-  {
-    npiMsg->dataLen = dataLen;
-    npiMsg->cmd0 = cmdTypeNpi;
-    npiMsg->cmd1 = cmdId;
-
-    // If we have any data to send
-    if (pData != NULL)
-    {
-      npiMsg->pData = (uint8_t *)((uint32_t)npiMsg + sizeof(_npiFrame_t));
-      memcpy(npiMsg->pData, pData, dataLen);
-    }
-
-    // Forward npiFrame to uNPI
-    if (NPITask_sendToHost(npiMsg) != NPI_SUCCESS)
-    {
-     NPIUtil_free((uint8_t *)npiMsg);
-
-     return FAILURE;
-    }
-  }
-  return SUCCESS;
+  return RTLSHost_createAndSendNpiMessage( cmdId, cmdTypeNpi, pData, dataLen);
 #else
   return SUCCESS;
 #endif
@@ -284,21 +317,22 @@ void RTLSHost_processNpiMessage(_npiFrame_t *pNpiMsg)
   // If we could not allocate space for the message, drop it
   if (!pHostMsg)
   {
-    NPITask_freeFrame(pNpiMsg);
+    NPITask_freeFrameData(pNpiMsg);
     return;
   }
 
   pHostMsg->cmdId = pNpiMsg->cmd1;
   pHostMsg->dataLen = pNpiMsg->dataLen;
 
-  if (pNpiMsg->dataLen != 0)
+  if ((pNpiMsg->dataLen != 0) && (NULL != pNpiMsg->pData))
   {
     pHostMsg->pData = (uint8_t *)NPIUtil_malloc(pNpiMsg->dataLen);
 
     // Check that we could allocate payload (only if the message is not empty)
-    if (!pHostMsg->pData && pNpiMsg->dataLen)
+    if (NULL == pHostMsg->pData)
     {
-      NPITask_freeFrame(pNpiMsg);
+      NPITask_freeFrameData(pNpiMsg);
+
       NPIUtil_free((uint8_t *)pHostMsg);
       return;
     }
@@ -322,7 +356,7 @@ void RTLSHost_processNpiMessage(_npiFrame_t *pNpiMsg)
     break;
   }
 
-  NPITask_freeFrame(pNpiMsg);
+  NPITask_freeFrameData(pNpiMsg);
 
   gRtlsCtrlProcessMsgCb(pHostMsg);
 #endif

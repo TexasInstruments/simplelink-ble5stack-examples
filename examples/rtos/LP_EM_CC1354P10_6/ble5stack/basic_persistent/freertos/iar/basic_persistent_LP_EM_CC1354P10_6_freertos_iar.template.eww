@@ -4,8 +4,5 @@
     <project>
         <path>$WS_DIR$/basic_persistent_LP_EM_CC1354P10_6_freertos_iar.ewp</path>
     </project>
-    <project>
-        <path>release/iar/freertos_builds_LP_EM_CC1354P10_6_release.ewp</path>
-    </project>
     <batchBuild/>
 </workspace>

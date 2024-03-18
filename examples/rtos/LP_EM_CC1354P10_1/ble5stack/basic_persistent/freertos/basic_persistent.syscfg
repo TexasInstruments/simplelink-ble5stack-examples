@@ -69,18 +69,16 @@ displayUART.uart.$name = "CONFIG_DISPLAY_UART";
 displayUART.uart.txPinInstance.$name = "CONFIG_GPIO_UART_TX";
 displayUART.uart.rxPinInstance.$name = "CONFIG_GPIO_UART_RX";
 
-/* ======== GPIO ======== */
-var GPIO = scripting.addModule("/ti/drivers/GPIO");
+/* ======== Button ======== */
+const Button       = scripting.addModule("/ti/drivers/apps/Button", {}, false);
+const Button1      = Button.addInstance();
+const Button2      = Button.addInstance();
 
-var gpio0 = GPIO.addInstance();
-gpio0.$hardware = system.deviceData.board.components.BUTTON0;
-gpio0.mode = "Input";
-gpio0.$name = "CONFIG_GPIO_BTN1";
+Button1.$name     = "CONFIG_BUTTON_0";
+Button1.$hardware = system.deviceData.board.components["BTN-1"];
 
-var gpio1 = GPIO.addInstance();
-gpio1.$hardware = system.deviceData.board.components.BUTTON1;
-gpio1.mode = "Input";
-gpio1.$name = "CONFIG_GPIO_BTN2";
+Button2.$name     = "CONFIG_BUTTON_1";
+Button2.$hardware = system.deviceData.board.components["BTN-2"];
 
 /* ======== NVS ======== */
 var NVS = scripting.addModule("/ti/drivers/NVS");
@@ -127,6 +125,18 @@ for(var setting in bleCcfgSettings)
 {
     device[setting] = bleCcfgSettings[setting];
 }
+
+/* ======== LEDS ======== */
+const GPIO        = scripting.addModule("/ti/drivers/GPIO");
+
+const GPIO2       = GPIO.addInstance();
+GPIO2.$hardware   = system.deviceData.board.components.LED_GREEN;
+GPIO2.$name       = "CONFIG_GPIO_LED_GREEN";
+
+const GPIO3       = GPIO.addInstance();
+GPIO3.$hardware   = system.deviceData.board.components.LED_RED;
+GPIO3.$name       = "CONFIG_GPIO_LED_RED";
+
 if (system.getRTOS() === "freertos"){
 	/* ======== FreeRTOS ======== */
 	const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
@@ -154,7 +164,8 @@ for(var setting in bleRfDesignSettings)
 /* ======== BLE ======== */
 var ble = scripting.addModule("/ti/ble5stack/ble");
 ble.rfDesign = rfDesignSettings.rfDesign;
-ble.deviceRole = "PERIPHERAL_CFG";
+ble.deviceRole = "PERIPHERAL_CFG+CENTRAL_CFG";
+ble.basicBLE = true;
 ble.disDevBySerUuid = true;
 ble.deviceName = "Basic BLE project";
 ble.numOfAdvSets = 1;
@@ -169,7 +180,8 @@ ble.advSet1.advData1.UUID016More = 65520;
 // Complete local name
 ble.advSet1.scanRes1.GAP_ADTYPE_LOCAL_NAME_COMPLETE = true;
 // Min and Max values of the connection interval - 2 octets Min, 2 octets Max (0xFFFF indicates no conn interval min or max)
-ble.advSet1.scanRes1.GAP_ADTYPE_SLAVE_CONN_INTERVAL_RANGE = true;
+const connIntervalRange = system.getScript("/ti/ble5stack/ble_common.js").getPeripheralConnIntervalRange();
+ble.advSet1.scanRes1[connIntervalRange] = true;
 // Min Connection Interval
 ble.advSet1.scanRes1.minConnInterval = 100;
 // Max Connection Interval
@@ -177,7 +189,7 @@ ble.advSet1.scanRes1.maxConnInterval = 130;
 // TX Power Level
 ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
 // Pairing Mode
-ble.bondPairing = "GAPBOND_PAIRING_MODE_WAIT_FOR_REQ";
+ble.bondPairing = "GAPBOND_PAIRING_MODE_INITIATE";
 
 if (system.getRTOS() === "tirtos7")
 {
@@ -593,10 +605,11 @@ if (system.getRTOS() === "tirtos7")
 /* ======== NVS ======== */
 /* For Thor devices */
 var nvs1 = NVS.addInstance();
-nvs1.internalFlash.regionBase   = 0x30000;
+
 if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6")
 {
-    nvs1.internalFlash.regionSize   = 0xCC000;
+	nvs1.internalFlash.regionBase   = 0x30000;
+	nvs1.internalFlash.regionSize   = 0xCC000;
 	/* ======== POWER ======== */
 	Power.policyFunction = "PowerCC26XX_doWFI";
 	/* ======== BLE ======== */
@@ -605,7 +618,8 @@ if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6")
 /* For loki devices */
 else if(lpName == "LP_EM_CC2340R5" || lpName == "LP_EM_CC2340R5_Q1")
 {
-    nvs1.internalFlash.regionSize   = 0x4C000;
+	nvs1.internalFlash.regionBase   = 0x32000;
+	nvs1.internalFlash.regionSize   = 0x4A000;
 }
 
 nvs1.internalFlash.regionType   = "Pointer";

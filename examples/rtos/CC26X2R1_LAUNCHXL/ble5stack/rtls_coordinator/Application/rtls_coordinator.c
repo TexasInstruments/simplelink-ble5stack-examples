@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -501,10 +501,10 @@ static void RTLSCoordinator_init(void)
 
   // Set Bond Manager parameters
   {
-    // Don't wait, initiate a pairing request or slave security request
+    // Don't wait, initiate a pairing request or peripheral security request
     uint8_t pairMode = GAPBOND_PAIRING_MODE_INITIATE;
     // Do not use authenticated pairing
-    uint8_t mitm = FALSE;
+    uint8_t mitm = TRUE;
     // This is a display only device
     uint8_t ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
     // Create a bond during the pairing process
@@ -665,6 +665,9 @@ static uint8_t RTLSCoordinator_processStackMsg(ICall_Hdr *pMsg)
               // Clear the CSA#2 feature bit
               CLR_FEATURE_FLAG( featSet[1], LL_FEATURE_CHAN_ALGO_2 );
 
+              // CM does not currently support 2M, clear 2M PHY bit
+              CLR_FEATURE_FLAG( featSet[1], LL_FEATURE_2M_PHY );
+
               // Enable CTE
               SET_FEATURE_FLAG( featSet[2], LL_FEATURE_CONNECTION_CTE_REQUEST );
               SET_FEATURE_FLAG( featSet[2], LL_FEATURE_CONNECTION_CTE_RESPONSE );
@@ -702,6 +705,27 @@ static uint8_t RTLSCoordinator_processStackMsg(ICall_Hdr *pMsg)
               // Upon param update, resend connection information
               RTLSCoordinator_processRTLSConnInfo(pCMU->connHandle);
             }
+          }
+        }
+        break;
+
+        case HCI_VE_EVENT_CODE:
+        {
+          hciEvt_VSCmdComplete_t *pkt  = (hciEvt_VSCmdComplete_t*) pMsg;
+          switch (pkt->cmdOpcode)
+          {
+            case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES:
+            {
+              uint8_t numActive = linkDB_NumActive();
+              // If the local supported features set has been changed while we are advertising,
+              // Restart the current advertising and start again with the updated features set.
+              if ((numActive < MAX_NUM_BLE_CONNS))
+              {
+                GapAdv_disable(advHandleLegacy);
+                GapAdv_enable(advHandleLegacy, GAP_ADV_ENABLE_OPTIONS_USE_MAX , 0);
+              }
+            }
+            break;
           }
         }
         break;
@@ -1578,7 +1602,7 @@ static bStatus_t RTLSCoordinator_openL2CAPChanCoc(uint16_t connHandle)
   if (L2CAP_PsmInfo(RTLS_PSM, &psmInfo) == INVALIDPARAMETER)
   {
     // Prepare the PSM parameters
-    psm.initPeerCredits = 0xFFFF;
+    psm.initPeerCredits = L2CAP_MAX_NOF_CREDITS;
     psm.maxNumChannels = MAX_NUM_BLE_CONNS;
     psm.mtu = RTLS_PDU_SIZE;
     psm.peerCreditThreshold = 0;
@@ -1633,7 +1657,7 @@ static void RTLSCoordinator_processL2CAPSignalEvent(l2capSignalEvent_t *pMsg)
         rcConnCB[pMsg->connHandle].cocCID = pEstEvt->CID;
 
         // Give max credits to the other side
-        L2CAP_FlowCtrlCredit(pEstEvt->CID, 0xFFFF);
+        L2CAP_FlowCtrlCredit(pEstEvt->CID, L2CAP_MAX_NOF_CREDITS);
 
         // L2CAP establishing a COC channel means that both Coordinator and Responder are ready
         // Tell RTLS Control that we are ready for more commands

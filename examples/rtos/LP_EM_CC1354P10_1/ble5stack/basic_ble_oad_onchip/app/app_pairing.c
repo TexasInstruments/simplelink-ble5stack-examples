@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,10 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 //! Includes
 //*****************************************************************************
+#include <string.h>
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Prototypes
@@ -118,57 +121,66 @@ void Pairing_pairStateHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
     {
         case BLEAPPUTIL_PAIRING_STATE_STARTED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_STARTED: connectionHandle = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle); dispIndex++;
-
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_STARTED: status = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->status); dispIndex++;
+            MenuModule_printf(APP_MENU_PAIRING_EVENT, 0, "Pairing Status: Started - "
+                              "connectionHandle = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "status = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->status);
 
             break;
         }
         case BLEAPPUTIL_PAIRING_STATE_COMPLETE:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_COMPLETE: connectionHandle = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle); dispIndex++;
+            MenuModule_printf(APP_MENU_PAIRING_EVENT, 0, "Pairing Status: Complete - "
+                              "connectionHandle = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "status = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->status);
 
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_COMPLETE: status = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->status); dispIndex++;
+            // The pairing is completed, so update the entry in connection list
+            // to the ID address instead of the RP address
+            linkDBInfo_t linkInfo;
+            // Get the list of connected devices
+            App_connInfo* connList = Connection_getConnList();
+            if (linkDB_GetInfo(((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle, &linkInfo) == SUCCESS)
+            {
+              // If the peer was using private address, update with ID address
+              if ((linkInfo.addrType == ADDRTYPE_PUBLIC_ID ||
+                   linkInfo.addrType == ADDRTYPE_RANDOM_ID) &&
+                   !osal_isbufset(linkInfo.addrPriv, 0, B_ADDR_LEN))
+              {
+
+                // Get the index of connection list by connHandle
+                uint8_t connIdx = Connection_getConnIndex(((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle);
+
+                // Verify that there is a match of connection handle
+                if (connIdx != LL_INACTIVE_CONNECTIONS)
+                {
+                  // Update the connection list with the ID address
+                  memcpy(connList[connIdx].peerAddress, linkInfo.addr, B_ADDR_LEN);
+                }
+              }
+            }
             break;
         }
 
         case BLEAPPUTIL_PAIRING_STATE_ENCRYPTED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_ENCRYPTED: connectionHandle = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle); dispIndex++;
-
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_ENCRYPTED: status = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->status); dispIndex++;
+            MenuModule_printf(APP_MENU_PAIRING_EVENT, 0, "Pairing Status: Encrypted - "
+                              "connectionHandle = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "status = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->status);
             break;
         }
 
         case BLEAPPUTIL_PAIRING_STATE_BOND_SAVED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_BOND_SAVED: connectionHandle = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle); dispIndex++;
-
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    PAIRING_STATE_BOND_SAVED: status = %d",
-                           dispIndex,
-                           ((BLEAppUtil_PairStateData_t *)pMsgData)->status); dispIndex++;
+            MenuModule_printf(APP_MENU_PAIRING_EVENT, 0, "Pairing Status: Bond saved - "
+                              "connectionHandle = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "status = "MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->connHandle,
+                              ((BLEAppUtil_PairStateData_t *)pMsgData)->status);
             break;
         }
 
@@ -192,21 +204,24 @@ void Pairing_pairStateHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 bStatus_t Pairing_start()
 {
-    bStatus_t status;
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Pairing_start: Register Handlers",
-                   dispIndex); dispIndex++;
+    bStatus_t status = SUCCESS;
 
     // Register the handlers
     status = BLEAppUtil_registerEventHandler(&pairingPasscodeHandler);
-    status = BLEAppUtil_registerEventHandler(&PairingPairStateHandler);
     if(status != SUCCESS)
     {
         return(status);
     }
 
-    return SUCCESS;
+    status = BLEAppUtil_registerEventHandler(&PairingPairStateHandler);
+    if(status != SUCCESS)
+    {
+        // Return status value
+        return(status);
+    }
+
+    // Return status value
+    return(status);
 }
 
 #endif // ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )

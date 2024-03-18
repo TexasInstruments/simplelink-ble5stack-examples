@@ -587,4 +587,6 @@ if (system.getRTOS() === "tirtos7")
     const Timestamp = scripting.addModule("/ti/sysbios/runtime/Timestamp");
     /* ================ GateMutexPri configuration ================ */
     var GateMutexPri = scripting.addModule("/ti/sysbios/gates/GateMutexPri");
+    /* ================ GateMutex configuration ================ */
+    const GateMutex = scripting.addModule("/ti/sysbios/gates/GateMutex");
 }

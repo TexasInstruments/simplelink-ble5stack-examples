@@ -27,7 +27,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,8 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Prototypes
@@ -131,7 +133,7 @@ const BLEAppUtil_AdvStart_t advSetStartParamsSet_1 =
  *
  * @brief   The purpose of this function is to handle advertise events
  *          that rise from the GAP and were registered in
- *          @ref BLEAppUtil_RegisterGAPEvent
+ *          @ref BLEAppUtil_registerEventHandler
  *
  * @param   event - message event.
  * @param   pMsgData - pointer to message data.
@@ -144,19 +146,17 @@ void Peripheral_AdvEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
     {
         case BLEAPPUTIL_ADV_START_AFTER_ENABLE:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    ADV_START_AFTER_ENABLE: Peripheral role, advhandle: %d",
-                           dispIndex,
-                           ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle); dispIndex++;
+            MenuModule_printf(APP_MENU_ADV_EVENT, 0, "Adv status: Started - handle: "
+                              MENU_MODULE_COLOR_YELLOW "%d" MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle);
             break;
         }
 
         case BLEAPPUTIL_ADV_END_AFTER_DISABLE:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    ADV_END_AFTER_DISABLE: Peripheral role, advhandle: %d",
-                           dispIndex,
-                           ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle); dispIndex++;
+            MenuModule_printf(APP_MENU_ADV_EVENT, 0, "Adv status: Ended - handle: "
+                              MENU_MODULE_COLOR_YELLOW "%d" MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle);
             break;
         }
 
@@ -172,7 +172,7 @@ void Peripheral_AdvEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  *
  * @brief   The purpose of this function is to handle connection related
  *          events that rise from the GAP and were registered in
- *          @ref BLEAppUtil_RegisterGAPEvent
+ *          @ref BLEAppUtil_registerEventHandler
  *
  * @param   event - message event.
  * @param   pMsgData - pointer to message data.
@@ -185,24 +185,6 @@ void Peripheral_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
     {
         case BLEAPPUTIL_LINK_ESTABLISHED_EVENT:
         {
-
-            if(((gapEstLinkReqEvent_t *)pMsgData)->connRole == BLEAPPUTIL_PERIPHERAL_ROLE)
-            {
-                /*! Print the peer address and connection handle number */
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    LINK_ESTABLISHED_EVENT: Peripheral role "
-                               "Connected to %s, connectionHandle = %d",
-                               dispIndex,
-                               BLEAppUtil_convertBdAddr2Str(((gapEstLinkReqEvent_t *)pMsgData)->devAddr),
-                               ((gapEstLinkReqEvent_t *)pMsgData)->connectionHandle); dispIndex++;
-
-                /*! Print the number of current connections */
-                Display_printf(dispHandle, dispIndex, 0,
-                               "#%5d    LINK_ESTABLISHED_EVENT: Peripheral role "
-                               "Num Conns = %d",
-                               dispIndex,
-                               linkDB_NumActive()); dispIndex++;
-            }
             /* Check if we reach the maximum allowed number of connections */
             if(linkDB_NumActive() < linkDB_NumConns())
             {
@@ -219,40 +201,7 @@ void Peripheral_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 
         case BLEAPPUTIL_LINK_TERMINATED_EVENT:
         {
-
-            /*! Print the connHandle and termination reason */
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    LINK_TERMINATED_EVENT: Peripheral role, "
-                           "connectionHandle = %d, reason = %d",
-                           dispIndex,
-                           ((gapTerminateLinkEvent_t *)pMsgData)->connectionHandle,
-                           ((gapTerminateLinkEvent_t *)pMsgData)->reason); dispIndex++;
-
-            /*! Print the number of current connections */
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    LINK_TERMINATED_EVENT: Peripheral role, "
-                           "Num Conns = %d",
-                           dispIndex,
-                           linkDB_NumActive()); dispIndex++;
-
             BLEAppUtil_advStart(peripheralAdvHandle_1, &advSetStartParamsSet_1);
-            break;
-        }
-        case BLEAPPUTIL_LINK_PARAM_UPDATE_REQ_EVENT:
-        {
-            gapUpdateLinkParamReqEvent_t *pReq = (gapUpdateLinkParamReqEvent_t *)pMsgData;
-
-            // Only accept connection intervals with peripheral latency of 0
-            // This is just an example of how the application can send a response
-            if(pReq->req.connLatency == 0)
-            {
-                BLEAppUtil_paramUpdateRsp(pReq,TRUE);
-            }
-            else
-            {
-                BLEAppUtil_paramUpdateRsp(pReq,FALSE);
-            }
-
             break;
         }
 
@@ -275,40 +224,37 @@ void Peripheral_GAPConnEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 bStatus_t Peripheral_start()
 {
-    bStatus_t status;
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Peripheral_start: Register Handlers",
-                   dispIndex); dispIndex++;
+    bStatus_t status = SUCCESS;
 
     status = BLEAppUtil_registerEventHandler(&peripheralConnHandler);
+    if(status != SUCCESS)
+    {
+        // Return status value
+        return(status);
+    }
+
     status = BLEAppUtil_registerEventHandler(&peripheralAdvHandler);
     if(status != SUCCESS)
     {
         return(status);
     }
 
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Peripheral_start: Init Adv Set 1",
-                   dispIndex); dispIndex++;
-
     status = BLEAppUtil_initAdvSet(&peripheralAdvHandle_1, &advSetInitParamsSet_1);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Peripheral_start: Start Adv Set 1",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_advStart(peripheralAdvHandle_1, &advSetStartParamsSet_1);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
 
-    return SUCCESS;
+    // Return status value
+    return(status);
 }
 
 #endif // ( HOST_CONFIG & ( PERIPHERAL_CFG ) )

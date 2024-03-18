@@ -22,11 +22,10 @@
         compilerBuildOptions="
             -I${PROJECT_ROOT}
             -I${PROJECT_ROOT}/${ConfigName}
-            @${PROJECT_LOC}/${ConfigName}/syscfg/ti_aoa_app_config.opt
             @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/config/build_components.opt
             @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/config/factory_config.opt
-            @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/Tools/Defines/rtls_coordinator_app.opt
-            @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/build_config.opt
+            @${PROJECT_LOC}/Tools/Defines/rtls_coordinator_app.opt
+            @${PROJECT_LOC}/build_config.opt
             -I${PROJECT_LOC}/Application
             -I${PROJECT_LOC}/RTLSCtrl
             -I${PROJECT_LOC}/Startup
@@ -57,7 +56,8 @@
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/common/nv
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/common/cc26xx
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/icall/src
-            -DDeviceFamily_CC26X2
+            -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/health_thermometer
+            -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/services/health_thermometer
             -DFLASH_ROM_BUILD
             -DNVOCMP_NWSAMEITEM=1
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/devices/cc13x2_cc26x2
@@ -73,38 +73,36 @@
             -mfpu=fpv4-sp-d16
         "
         linkerBuildOptions="
-            --diag_wrap=off
-            --display_error_number
-            -x
+            -Wl,--diag_wrap=off
+            -Wl,--display_error_number
+            -Wl,-x
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/libraries/cc26x2r1/OneLib.a
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/libraries/cc26x2r1/StackWrapper.a
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/libraries/cc26x2r1/ble_r2.symbols
-            --diag_suppress=16002-D
-            --diag_suppress=10247-D
-            --diag_suppress=10325-D
-            --diag_suppress=10229-D
-            --diag_suppress=16032-D
-            -c
+            -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/devices/cc13x2_cc26x2/driverlib/bin/ticlang/driverlib.lib
+            -Wl,--diag_suppress=16002-D
+            -Wl,--diag_suppress=10247-D
+            -Wl,--diag_suppress=10325-D
+            -Wl,--diag_suppress=10229-D
+            -Wl,--diag_suppress=16032-D
+            -Wl,-c
             -L${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source
             -L${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/kernel/tirtos7/packages
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/display/lib/ticlang/m4f/display_cc26x2.a
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/grlib/lib/ticlang/m4f/grlib.a
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/drivers/rf/lib/ticlang/m4f/rf_multiMode_cc26x2.a
-            -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/devices/cc13x2_cc26x2/driverlib/bin/ticlang/driverlib.lib
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/drivers/lib/ticlang/m4f/drivers_cc26x2.a
-            --define=FLASH_ROM_BUILD=2
+            -Wl,--define=FLASH_ROM_BUILD=2
             -l${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/kernel/tirtos7/packages/ti/sysbios/lib/ticlang/m4f/sysbios.a
             -L${PROJECT_BUILD_DIR}/syscfg
-            -lti/devices/cc13x2_cc26x2/driverlib/bin/ticlang/driverlib.lib
             -Wl,--rom_model
             -Wl,--warn_sections
             -L${CG_TOOL_ROOT}/lib
             -llibc.a
         "
         postBuildStep="
-            ${CG_TOOL_HEX} -order MS --memwidth=8 --romwidth=8 --intel -o ${ProjName}.hex ${ProjName}.out
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileName} ${BuildArtifactFileBaseName}.hex
         "
-        enableSysConfigTool="true"
         sysConfigBuildOptions="
             --product ${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/.metadata/product.json
             --compiler ticlang
@@ -125,9 +123,9 @@
         </file>
         <file path="../../Startup/osal_icall_ble.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Startup">
         </file>
-        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/common/cc26xx/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Application">
+        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/common/cc26xx/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
         </file>
-        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/common/cc26xx/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Application">
+        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/common/cc26xx/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
         </file>
         <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/common/nv/crc.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
         </file>

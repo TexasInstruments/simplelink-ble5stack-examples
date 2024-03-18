@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -434,11 +434,8 @@ void simple_peripheral_handleNPIRxInterceptEvent(uint8_t *pMsg)
  // Send Command via HCI TL
  HCI_TL_SendToStack(((NPIMSG_msg_t *)pMsg)->pBuf);
 
- // The data is stored as a message, free this first.
- ICall_freeMsg(((NPIMSG_msg_t *)pMsg)->pBuf);
-
- // Free container.
- ICall_free(pMsg);
+ // Free the NPI message
+ NPITask_freeNpiMsg(pMsg);
 }
 
 /*********************************************************************
@@ -1157,7 +1154,7 @@ static void SimplePeripheral_processGapMessage(gapEventHdr_t *pMsg)
       rsp.connectionHandle = pReq->req.connectionHandle;
       rsp.signalIdentifier = pReq->req.signalIdentifier;
 
-      // Only accept connection intervals with slave latency of 0
+      // Only accept connection intervals with peripheral latency of 0
       // This is just an example of how the application can send a response
       if(pReq->req.connLatency == 0)
       {
@@ -2078,7 +2075,7 @@ static void SimplePeripheral_processParamUpdate(uint16_t connHandle)
 
   req.connectionHandle = connHandle;
 #ifdef DEFAULT_SEND_PARAM_UPDATE_REQ
-  req.connLatency = DEFAULT_DESIRED_SLAVE_LATENCY;
+  req.connLatency = DEFAULT_DESIRED_PERIPHERAL_LATENCY;
   req.connTimeout = DEFAULT_DESIRED_CONN_TIMEOUT;
   req.intervalMin = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
   req.intervalMax = DEFAULT_DESIRED_MAX_CONN_INTERVAL;

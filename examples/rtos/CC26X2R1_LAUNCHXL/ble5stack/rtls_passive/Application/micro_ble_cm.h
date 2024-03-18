@@ -130,8 +130,6 @@ typedef struct
   uint8_t   nextChan;                              //! next data channel
   uint8_t   numUsedChans;                          //! count of the number of usable data channels
   uint8_t   chanMap[CM_MAX_NUM_DATA_CHAN];         //! current channel map table that is in use for this connection
-  uint8_t   centralAddress[CM_DEVICE_ADDR_LEN];    //! BLE address of connection central
-  uint8_t   peripheralAddress[CM_DEVICE_ADDR_LEN]; //! BLE address of connection peripheral
   uint8_t   rssiCentral;                           //! last Rssi value Central
   uint8_t   rssiPeripheral;                        //! last Rssi value Peripheral
   uint32_t  timeStampCentral;                      //! last timeStamp Central
@@ -150,7 +148,7 @@ typedef struct
 typedef struct
 {
   uint8_t         numHandles;                       //! number of active handles corresponds to number of instances of ubCM_ConnInfo_t
-  ubCM_ConnInfo_t ArrayOfConnInfo[CM_MAX_SESSIONS]; //! pointer to set of connection information for all active connecitons
+  ubCM_ConnInfo_t ArrayOfConnInfo[CM_MAX_SESSIONS]; //! pointer to set of connection information for all active connections
 } ubCM_GetConnInfoComplete_t;
 
 typedef void (*pfnAppCb)(uint8_t *pCmd);

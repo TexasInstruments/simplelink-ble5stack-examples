@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ Target Device: cc13xx_cc26xx
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
 #include <ti/bleapp/profiles/oad/oad_profile.h>
-
+#include <app_main.h>
 
 //*****************************************************************************
 //! Defines
@@ -68,6 +68,7 @@ BLEAppUtil_GeneralParams_t appMainParams =
     .profileRole = (BLEAppUtil_Profile_Roles_e)HOST_CONFIG,
     .addressMode = DEFAULT_ADDRESS_MODE,
     .deviceNameAtt = attDeviceName,
+    .pDeviceRandomAddress = pRandomAddress,
 };
 
 BLEAppUtil_PeriCentParams_t appMainPeriCentParams =
@@ -76,15 +77,9 @@ BLEAppUtil_PeriCentParams_t appMainPeriCentParams =
  .gapBondParams = &gapBondParams
 };
 
-// Display Interface
-uint8 dispIndex = 0;
-Display_Handle dispHandle = NULL;
-
 //*****************************************************************************
 //! Functions
 //*****************************************************************************
-extern bStatus_t Peripheral_start(void);
-extern bStatus_t Pairing_start(void);
 
 /*********************************************************************
  * @fn      criticalErrorHandler
@@ -119,11 +114,12 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
 {
     bStatus_t status = SUCCESS;
 
+    status = OADProfile_start(NULL);
+
+    status = Connection_start();
     status = Peripheral_start();
 
     status = Pairing_start();
-
-    status = OADProfile_start(NULL);
 
     if(status != SUCCESS)
     {

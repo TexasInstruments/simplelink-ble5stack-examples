@@ -28,7 +28,104 @@
             <div class ="nav"></div>
 
         </header> <div id="content">
-    <p>Please refer to the readme file found in the rtls_coordinator example application</p>
+    <h1>RTLS System - Connection Monitor</h1>
+
+<h2>Table of Contents</h2>
+
+<ul>
+<li><a href="#general-information">General Information</a></li>
+<li><a href="#Introduction">Introduction</a></li>
+<li><a href="#general-configuration">General Configuration</a></li>
+<li><a href="#cci-setup">Continuous Connection Information - Setup</a>
+<ul>
+<li><a href="#cci-software-setup">Software Setup</a></li>
+<li><a href="cci-running-the-example">Running The Example</a></li>
+</ul></li>
+</ul>
+
+<h1><a name="general-informatio"></a>General Information</h1>
+
+<ol>
+<li>Detailed guide can be found on <a href="http://dev.ti.com/tirex/explore/node?node=ADoNVRzIjRH1Ft0aHjErQg__pTTHBmu__LATEST">SimpleLink Academy</a></li>
+<li>To get usage information for the RTLS Node Manager scripts and GUI please refer to: <code>tools\ble5stack\rtls_agent\README.md</code></li>
+<li>In order to edit and view how the RTLS subsystem handles uNPI commands, please refer to the following file: <code>tools\ble5stack\rtls_agent\rtls\rtls\ss_rtls.py</code></li>
+<li><p>In order to see a usage example, please refer to:</p>
+
+<ul>
+<li><code>tools\ble5stack\rtls_agent\examples\rtls_connected.py</code> which shows how to use a RTLS Coordinator + RTLS Responder + RTLS Passive / Connection Monitor combination.</li>
+</ul></li>
+<li><p>To access GUI, please refer to the readme file found in <code>tools\ble5stack\rtls_agent</code>.</p></li>
+</ol>
+
+<h1><a name="Introduction"></a>Introduction</h1>
+
+<p>This readme contains the information on how to setup Continuous Connection Information (CCI) demo.</p>
+
+<h1><a name="general-configuration"></a>General Configuration</h1>
+
+<p>The following is a list of build defines that are set in build_config.opt file for RTLS Coordinator and RTLS Responder.
+<br> For more information please refer to
+<a href="https://dev.ti.com/tirex/explore/node?node=AOimuSWjap.4RuDbcp7OqA__pTTHBmu__LATEST"><strong>BLE5 Stack User's guide</strong></a></p>
+
+<h4>GAP_BOND_MGR</h4>
+
+<ul>
+<li>GAP_BOND_MGR - Used to include the Bond Manager</li>
+</ul>
+
+<h4>HOST_CONFIG</h4>
+
+<p>BLE Host Build Configurations</p>
+
+<ul>
+<li>PERIPHERAL_CFG+CENTRAL_CFG - Used to define host as BLE multi-role</li>
+</ul>
+
+<h4>BLE_V41_FEATURES</h4>
+
+<p>Configure the stack to use features from the BLE 4.1 Specification</p>
+
+<ul>
+<li>L2CAP_COC_CFG - Enable L2CAP Connection Oriented Channels</li>
+</ul>
+
+<h4>HCI_TL_NONE</h4>
+
+<ul>
+<li>HCI_TL_NONE - No supported HCI commands are available via the Transport Layer's NPI.</li>
+</ul>
+
+<h1><a name="cci-setup"></a>Continuous Connection Info - Setup</h1>
+
+<h2><a name="cci-software-setup"></a>Software Setup</h2>
+
+<p>Continuous Connection Information (CCI) is currently supported on all roles with the following caveats:</p>
+
+<h4>RTLS Coordinator</h4>
+
+<ul>
+<li>Coordinator supports BLE multi-role</li>
+<li>Coordinator supports up to 8 BLE connections to Responders</li>
+</ul>
+
+<h4>RTLS Responder</h4>
+
+<ul>
+<li>Responder supports BLE multi-role</li>
+</ul>
+
+<h4>RTLS Passive / Connection Monitor (CM)</h4>
+
+<ul>
+<li>Passive / CM projects showcase how to utilize the TI Micro BLE Stack as the connection monitor role.
+<br> For more information regarding TI Micro BLE Stack, please refer to Micro BLE Stack section under
+<a href="https://dev.ti.com/tirex/explore/node?node=AOimuSWjap.4RuDbcp7OqA__pTTHBmu__LATEST"><strong>BLE5 Stack User's guide</strong></a></li>
+<li>Passive / CM supports tracking up to 8 BLE connections</li>
+</ul>
+
+<h2><a name="cci-running-the-example"></a>Running The Example</h2>
+
+<p>The steps to run the out of box example is described in <code>tools\ble5stack\rtls_agent\README.html</code></p>
 
     </div>
     <footer id="tiFooter">
@@ -36,7 +133,7 @@
       with 100,000+ analog ICs and embedded processors, along with software, tools
       and the industry's largest sales/support staff.</p>
       <p>
-        <a href="http://www.ti.com/corp/docs/legal/copyright.shtml">&copy; Copyright 1995-2023</a>, Texas Instruments Incorporated. All rights reserved. <br>
+        <a href="http://www.ti.com/corp/docs/legal/copyright.shtml">&copy; Copyright 1995-2024</a>, Texas Instruments Incorporated. All rights reserved. <br>
         <a href="http://www.ti.com/corp/docs/legal/trademark/trademrk.htm">Trademarks</a> | <a href="http://www.ti.com/corp/docs/legal/privacy.shtml">Privacy policy</a> | <a href="http://www.ti.com/corp/docs/legal/termsofuse.shtml">Terms of use</a> | <a href="http://www.ti.com/lsds/ti/legal/termsofsale.page">Terms of sale</a>
       </p>
     </footer>

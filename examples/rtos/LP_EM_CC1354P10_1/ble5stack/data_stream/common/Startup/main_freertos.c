@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2020-2023, Texas Instruments Incorporated
+ Copyright (c) 2020-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,9 @@
 #include <ti/drivers/Power.h>
 #include <ti/display/Display.h>
 #include <ti/drivers/power/PowerCC26XX.h>
+#include <ti/drivers/UART2.h>
+#include <ti/common/cc26xx/uartlog/UartLog.h>
+#include <ti/devices/DeviceFamily.h>
 
 #include <icall.h>
 #include "hal_assert.h"
@@ -98,11 +101,9 @@ icall_userCfg_t user0Cfg = BLE_USER_CFG;
 /*******************************************************************************
  * EXTERNS
  */
-//extern void appMain(void);
-extern assertCback_t halAssertCback;
-extern void AssertHandler(uint8 assertCause, uint8 assertSubcause);
 extern void appMain(void);
-extern Display_Handle dispHandle;
+extern void AssertHandler(uint8 assertCause, uint8 assertSubcause);
+
 /*******************************************************************************
  * @fn          Main
  *
@@ -124,17 +125,20 @@ int main()
   halAssertCback = AssertHandler;
   RegisterAssertCback(AssertHandler);
 
-  Board_init();;
+  Board_init();
 
   /* Update User Configuration of the stack */
   user0Cfg.appServiceInfo->timerTickPeriod = ICall_getTickPeriod();
   user0Cfg.appServiceInfo->timerMaxMillisecond  = ICall_getMaxMSecs();
 
+  /* Initialize all applications tasks */
   appMain();
+
   /* Start the FreeRTOS scheduler */
   vTaskStartScheduler();
 
   return 0;
+
 }
 
 //*****************************************************************************
@@ -149,9 +153,7 @@ int main()
 void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
 {
     //Handle FreeRTOS Stack Overflow
-    while(1)
-    {
-    }
+    AssertHandler(HAL_ASSERT_CAUSE_STACK_OVERFLOW_ERROR, 0);
 }
 
 /*******************************************************************************
@@ -190,63 +192,64 @@ void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
  *
  * @return      None.
  */
-void AssertHandler(uint8 assertCause, uint8 assertSubcause)
+void AssertHandler(uint8_t assertCause, uint8_t assertSubcause)
 {
-  // Open the display if the app has not already done so
-  if ( !dispHandle )
-  {
-    dispHandle = Display_open(Display_Type_ANY, NULL);
-  }
+    Log_error2(">>>STACK ASSERT Cause 0x%02x subCause 0x%02x",
+               assertCause, assertSubcause);
 
-  Display_print0(dispHandle, 0, 0, ">>>STACK ASSERT");
-
-  // check the assert cause
-  switch (assertCause)
-  {
+    // check the assert cause
+    switch(assertCause)
+    {
     case HAL_ASSERT_CAUSE_OUT_OF_MEMORY:
-      Display_print0(dispHandle, 0, 0, "***ERROR***");
-      Display_print0(dispHandle, 2, 0, ">> OUT OF MEMORY!");
-      break;
+        Log_error0("***ERROR***");
+        Log_error0(">> OUT OF MEMORY!");
+        break;
 
     case HAL_ASSERT_CAUSE_INTERNAL_ERROR:
-      // check the subcause
-      if (assertSubcause == HAL_ASSERT_SUBCAUSE_FW_INERNAL_ERROR)
-      {
-        Display_print0(dispHandle, 0, 0, "***ERROR***");
-        Display_print0(dispHandle, 2, 0, ">> INTERNAL FW ERROR!");
-      }
-      else
-      {
-        Display_print0(dispHandle, 0, 0, "***ERROR***");
-        Display_print0(dispHandle, 2, 0, ">> INTERNAL ERROR!");
-      }
-      break;
+        // check the subcause
+        if(assertSubcause == HAL_ASSERT_SUBCAUSE_FW_INERNAL_ERROR)
+        {
+            Log_error0("***ERROR***");
+            Log_error0(">> INTERNAL FW ERROR!");
+        }
+        else
+        {
+            Log_error0("***ERROR***");
+            Log_error0(">> INTERNAL ERROR!");
+        }
+        break;
 
     case HAL_ASSERT_CAUSE_ICALL_ABORT:
-      Display_print0(dispHandle, 0, 0, "***ERROR***");
-      Display_print0(dispHandle, 2, 0, ">> ICALL ABORT!");
-      HAL_ASSERT_SPINLOCK;
-      break;
+        Log_error0("***ERROR***");
+        Log_error0(">> ICALL ABORT!");
+        //HAL_ASSERT_SPINLOCK;
+        break;
 
     case HAL_ASSERT_CAUSE_ICALL_TIMEOUT:
-      Display_print0(dispHandle, 0, 0, "***ERROR***");
-      Display_print0(dispHandle, 2, 0, ">> ICALL TIMEOUT!");
-      HAL_ASSERT_SPINLOCK;
-      break;
+        Log_error0("***ERROR***");
+        Log_error0(">> ICALL TIMEOUT!");
+        //HAL_ASSERT_SPINLOCK;
+        break;
 
     case HAL_ASSERT_CAUSE_WRONG_API_CALL:
-      Display_print0(dispHandle, 0, 0, "***ERROR***");
-      Display_print0(dispHandle, 2, 0, ">> WRONG API CALL!");
-      HAL_ASSERT_SPINLOCK;
-      break;
+        Log_error0("***ERROR***");
+        Log_error0(">> WRONG API CALL!");
+        //HAL_ASSERT_SPINLOCK;
+        break;
 
-  default:
-      Display_print0(dispHandle, 0, 0, "***ERROR***");
-      Display_print0(dispHandle, 2, 0, ">> DEFAULT SPINLOCK!");
-      HAL_ASSERT_SPINLOCK;
-  }
+    case HAL_ASSERT_CAUSE_STACK_OVERFLOW_ERROR:
+        Log_error0("***ERROR***");
+        Log_error0(">> STACK OVERFLOW!");
+        HAL_ASSERT_SPINLOCK;
+        break;
 
-  return;
+    default:
+        Log_error0("***ERROR***");
+        Log_error0(">> DEFAULT SPINLOCK!");
+        //HAL_ASSERT_SPINLOCK;
+    }
+
+    return;
 }
 
 

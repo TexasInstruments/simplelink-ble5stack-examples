@@ -42,6 +42,8 @@
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/cc26xx</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/icall/src</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/profiles/simple_profile/cc26xx</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/hal/src/target/cc2650/rom</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2_cc26x2</path>
@@ -50,7 +52,6 @@
     </includePath>
 
     <defines>
-        <define>DeviceFamily_CC26X2</define>
         <define>FLASH_ROM_BUILD</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>HEAPMGR_CONFIG=0x80</define>
@@ -59,9 +60,9 @@
 
     <extraOptions>
         <args>
-            <arg>-f$PROJ_DIR$/ti_aoa_app_config.opt</arg>
-            <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/Tools/Defines/rtls_coordinator_app.opt</arg>
-            <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/build_config.opt</arg>
+            <arg>-f$PROJ_DIR$/ti_utils_build_compiler.opt</arg>
+            <arg>-f$PROJ_DIR$/Tools/Defines/rtls_coordinator_app.opt</arg>
+            <arg>-f$PROJ_DIR$/build_config.opt</arg>
             <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/build_components.opt</arg>
             <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/factory_config.opt</arg>
             <arg>--diag_suppress=Pa205</arg>
@@ -85,10 +86,10 @@
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/libraries/cc26x2r1/ble_r2.symbols</arg>
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/libraries/cc26x2r1/OneLib.a</arg>
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/libraries/cc26x2r1/StackWrapper.a</arg>
+            <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2_cc26x2/driverlib/bin/iar/driverlib.lib</arg>
             <arg>--config_def DCC2642=1</arg>
             <arg>--config_def PAGE_ALIGN=-1</arg>
             <arg>-L$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source</arg>
-            <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2_cc26x2/driverlib/bin/iar/driverlib.lib</arg>
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/drivers/lib/iar/m4f/drivers_cc26x2.a</arg>
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/drivers/rf/lib/iar/m4f/rf_multiMode_cc26x2.a</arg>
             <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/display/lib/iar/m4f/display_cc26x2.a</arg>
@@ -136,8 +137,10 @@
         <group name="Application" build="true">
             <path copyTo="$PROJ_DIR$/Application/rtls_coordinator.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/Application/rtls_coordinator.c</path>
             <path copyTo="$PROJ_DIR$/Application/rtls_coordinator.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/CC26X2R1_LAUNCHXL/ble5stack/rtls_coordinator/Application/rtls_coordinator.h</path>
-            <path reference="$PROJ_DIR$/Application/util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.c</path>
-            <path reference="$PROJ_DIR$/Application/util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.h</path>
+        </group>
+        <group name="common/Util" build="true">
+            <path reference="$PROJ_DIR$/common/Util/util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.c</path>
+            <path reference="$PROJ_DIR$/common/Util/util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.h</path>
         </group>
         <group name="Drivers/NV" build="true">
             <path reference="$PROJ_DIR$/Drivers/NV/crc.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv/crc.c</path>

@@ -635,8 +635,28 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_app_onchip_postbuild $COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0xCC000</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --bin ""$TARGET_BPATH$".out" ""$TARGET_BPATH$"_noheader.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0xCC000 --version 1.0.0 --pad-header --key $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/third_party/mcuboot/root-ec-p256.pem "$TARGET_DIR$/$TARGET_BNAME$_noheader.bin" "$TARGET_DIR$/$TARGET_BNAME$_v1.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0xCC000 --version 2.0.0 --pad-header --key $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/third_party/mcuboot/root-ec-p256.pem "$TARGET_DIR$/$TARGET_BNAME$_noheader.bin" "$TARGET_DIR$/$TARGET_BNAME$_v2.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+            </buildActions>
             </data>
         </settings>
         <settings>
@@ -1597,8 +1617,28 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/ble5stack/oad/iar_app_onchip_postbuild $COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$ $TARGET_BPATH$ 0xCC000</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>"$TOOLKIT_DIR$/bin/ielftool" --bin ""$TARGET_BPATH$".out" ""$TARGET_BPATH$"_noheader.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0xCC000 --version 1.0.0 --pad-header --key $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/third_party/mcuboot/root-ec-p256.pem "$TARGET_DIR$/$TARGET_BNAME$_noheader.bin" "$TARGET_DIR$/$TARGET_BNAME$_v1.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0xCC000 --version 2.0.0 --pad-header --key $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/third_party/mcuboot/root-ec-p256.pem "$TARGET_DIR$/$TARGET_BNAME$_noheader.bin" "$TARGET_DIR$/$TARGET_BNAME$_v2.bin"</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+            </buildActions>
             </data>
         </settings>
         <settings>

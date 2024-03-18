@@ -47,20 +47,16 @@ extern "C"
  * INCLUDES
  */
 
-#include <ti/sysbios/knl/Event.h>
-
 #include "hal_types.h"
 #include <ti_drivers_config.h>
+
+#include <mqueue.h>
+#include <pthread.h>
 #include "util.h"
 
 /*********************************************************************
 *  EXTERNAL VARIABLES
 */
-extern Queue_Struct appMsg;
-extern Queue_Handle appMsgQueue;
-
-// Event globally used to post local events and pend on local events.
-extern Event_Handle syncAppEvent;
 
 /*********************************************************************
  * CONSTANTS
@@ -77,6 +73,9 @@ extern Event_Handle syncAppEvent;
 #define MICRO_CM_APP_USTACK_EVT               0x1
 #define MICRO_CM_APP_RTLS_CTRL_EVT            0x2
 #define MICRO_CM_APP_CM_EVT                   0x3
+
+#define UBT_QUEUE_SIZE                        16
+#define UCA_QUEUE_SIZE                        16
 
 // Stack event
 typedef struct
