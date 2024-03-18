@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 
 //*****************************************************************************
@@ -67,6 +69,7 @@ BLEAppUtil_GeneralParams_t appMainParams =
     .profileRole = (BLEAppUtil_Profile_Roles_e)(HOST_CONFIG),
     .addressMode = DEFAULT_ADDRESS_MODE,
     .deviceNameAtt = attDeviceName,
+    .pDeviceRandomAddress = pRandomAddress,
 };
 
 BLEAppUtil_PeriCentParams_t appMainPeriCentParams =
@@ -80,21 +83,9 @@ BLEAppUtil_PeriCentParams_t appMainPeriCentParams =
 #endif
 };
 
-// Display Interface
-uint8 dispIndex = 0;
-Display_Handle dispHandle = NULL;
-
 //*****************************************************************************
 //! Functions
 //*****************************************************************************
-extern bStatus_t Peripheral_start(void);
-extern bStatus_t Broadcaster_start(void);
-extern bStatus_t Central_start(void);
-extern bStatus_t Observer_start(void);
-extern bStatus_t Pairing_start(void);
-extern bStatus_t Data_start(void);
-extern bStatus_t DevInfo_start(void);
-extern bStatus_t DataStream_start(void);
 
 /*********************************************************************
  * @fn      criticalErrorHandler
@@ -117,31 +108,6 @@ void criticalErrorHandler(int32 errorCode , void* pInfo)
 }
 
 /*********************************************************************
- * @fn      openDisplay
- *
- * @brief   Initializes and open the Display driver.
- *
- * @param   dispHandle   A handle for specific Display implementations
- *
- * @return  SUCCESS, FAILURE
- */
-static bStatus_t openDisplay(void)
-{
-    bStatus_t status = SUCCESS;
-    //Initializes the Display driver.
-    Display_init();
-
-    // Open Display.
-    dispHandle = Display_open(Display_Type_ANY, NULL);
-    if (dispHandle == NULL)
-    {
-        status = FAILURE;
-    }
-
-    return status;
-}
-
-/*********************************************************************
  * @fn      App_StackInitDone
  *
  * @brief   This function will be called when the BLE stack init is
@@ -153,39 +119,40 @@ static bStatus_t openDisplay(void)
 void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
 {
     bStatus_t status = SUCCESS;
-    uint8_t* pRpa;
 
-    // Open Display.
-    status = openDisplay();
-    if(status != SUCCESS)
-    {
-        // TODO: Call Error Handler
-    }
-
-    // Print the device address
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    BLE Device Address %s",
-                   dispIndex,
-                   BLEAppUtil_convertBdAddr2Str(deviceInitDoneData->devAddr)); dispIndex++;
-
-    // Read the current RPA.
-    pRpa = GAP_GetDevAddress(FALSE);
+    // Print the device ID address
+    MenuModule_printf(APP_MENU_DEVICE_ADDRESS, 0, "BLE ID Address: "
+                      MENU_MODULE_COLOR_BOLD MENU_MODULE_COLOR_GREEN "%s" MENU_MODULE_COLOR_RESET,
+                      BLEAppUtil_convertBdAddr2Str(deviceInitDoneData->devAddr));
 
     if ( appMainParams.addressMode > ADDRMODE_RANDOM)
     {
-      // If the RPA has changed, update the display
-      Display_printf(dispHandle, dispIndex, 0,
-                     "#%5d    RP Addr: %s",
-                     dispIndex,
-                     BLEAppUtil_convertBdAddr2Str(pRpa)); dispIndex++;
+      // Print the RP address
+        MenuModule_printf(APP_MENU_DEVICE_RP_ADDRESS, 0,
+                     "BLE RP Address: "
+                     MENU_MODULE_COLOR_BOLD MENU_MODULE_COLOR_GREEN "%s" MENU_MODULE_COLOR_RESET,
+                     BLEAppUtil_convertBdAddr2Str(GAP_GetDevAddress(FALSE)));
     }
+
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
+    status = DevInfo_start();
+    if ( status != SUCCESS )
+    {
+    // TODO: Call Error Handler
+    }
+    status = DataStream_start();
+    if ( status != SUCCESS )
+    {
+    // TODO: Call Error Handler
+    }
+#endif
 
 #if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG ) )
     // Any device that accepts the establishment of a link using
     // any of the connection establishment procedures referred to
     // as being in the Peripheral role.
     // A device operating in the Peripheral role will be in the
-    // Slave role in the Link Layer Connection state.
+    // Peripheral role in the Link Layer Connection state.
     status = Peripheral_start();
     if(status != SUCCESS)
     {
@@ -206,7 +173,7 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
 #if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( CENTRAL_CFG ) )
     // A device that supports the Central role initiates the establishment
     // of an active physical link. A device operating in the Central role will
-    // be in the Master role in the Link Layer Connection state.
+    // be in the Central role in the Link Layer Connection state.
     // A device operating in the Central role is referred to as a Central.
     status = Central_start();
     if(status != SUCCESS)
@@ -226,15 +193,18 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
 #endif
 
 #if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
+    status = Connection_start();
+    if ( status != SUCCESS )
+    {
+    // TODO: Call Error Handler
+    }
     status = Pairing_start();
-    if(status != SUCCESS)
+    if ( status != SUCCESS )
     {
     // TODO: Call Error Handler
     }
     status = Data_start();
-    status = DevInfo_start();
-    status = DataStream_start();
-    if(status != SUCCESS)
+    if ( status != SUCCESS )
     {
     // TODO: Call Error Handler
     }
@@ -250,6 +220,22 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
  */
 void appMain(void)
 {
+#if !defined(Display_DISABLE_ALL)
+    MenuModule_params_t params = {
+      .mode = MenuModule_Mode_PRINTS_ONLY
+    };
+
+    if(MenuModule_init(NULL, &params) != SUCCESS)
+    {
+    // TODO: Call Error Handler
+    }
+#endif // #if !defined(Display_DISABLE_ALL)
+
+    // Print the application name
+    MenuModule_printf(APP_MENU_GENERAL_STATUS_LINE, 0,
+                      MENU_MODULE_COLOR_BOLD MENU_MODULE_COLOR_CYAN
+                      "Data Stream" MENU_MODULE_COLOR_RESET);
+
     // Call the BLEAppUtil module init function
     BLEAppUtil_init(&criticalErrorHandler, &App_StackInitDoneHandler,
                     &appMainParams, &appMainPeriCentParams);

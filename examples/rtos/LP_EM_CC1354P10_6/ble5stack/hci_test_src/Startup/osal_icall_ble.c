@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2014-2023, Texas Instruments Incorporated
+ Copyright (c) 2014-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -204,6 +204,15 @@ int stack_main( void *arg )
     ICall_abort();
   }
 
+#ifdef CC23X0
+  if (LL_initRNGNoise() != LL_STATUS_SUCCESS)
+  {
+	/* abort */
+    ICall_abort();
+  }
+#endif
+
+  // Disable interrupts
   halIntState_t state;
   HAL_ENTER_CRITICAL_SECTION(state);
 

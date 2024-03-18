@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -49,13 +49,12 @@
  * INCLUDES
  */
 
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/hal/Hwi.h>
 #include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Queue.h>
+#include <ti/sysbios/knl/Task.h>
+
 #include <ti/display/Display.h>
 
+#include <mqueue.h>
 #if defined(USE_FPGA) || defined(DEBUG_SW_TRACE)
 #include <driverlib/ioc.h>
 #endif /* USE_FPGA | DEBUG_SW_TRACE */
@@ -93,6 +92,7 @@
 #define HCI_PHY_UPDATE_COMPLETE_EVENT_LEN       6
 #define HCI_SCAN_REQ_REPORT_EVENT_LEN           11
 #define HCI_BLE_CHANNEL_MAP_UPDATE_EVENT_LEN    9
+#define HCI_LONG_TERM_KEY_REQ_EVENT_LEN         13
 
 // Task configuration
 #define HTA_TASK_PRIORITY                     1
@@ -117,8 +117,7 @@
 // Queue record structure
 typedef struct  Host_TestAPP_QueueRec_t
 {
-    Queue_Elem _elem;
-    aeExtAdvRptEvt_t *pData;
+    uint32 *pData;
     void* callbackFctPtr;
 } Host_TestAPP_QueueRec;
 
@@ -140,11 +139,22 @@ extern uint16 lastAppOpcodeSent;
  * LOCAL VARIABLES
  */
 // Entity ID globally used to check for source and/or destination of messages
-static ICall_EntityID selfEntity;
 
-// Event globally used to post local events and pend on system and
-// local events.
-static ICall_SyncHandle Host_TestApp_syncEvent;
+#define HOST_TEST_SCAN_Q_SIZE 40
+/** @data structure for the thread entity */
+typedef struct
+{
+    ICall_EntityID  selfEntity;
+    pthread_t       threadId;
+    mqd_t           queueHandle;
+    mq_attr         queueAttr;
+    // Task configuration
+    Task_Struct     htaTask;
+
+    ICall_SyncHandle syncEvent;
+} Host_TestAPP_Data_t;
+
+Host_TestAPP_Data_t gHost_TestAPP_Data;
 
 // Task configuration
 Task_Struct htaTask;
@@ -167,10 +177,6 @@ uint8_t htaTaskStack[HTA_TASK_STACK_SIZE];
 // Stack build revision
 ICall_BuildRevision buildRev;
 
-
-// Handle for the Callback Event Queue
-static Queue_Handle Host_testApp_Queue;
-
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -179,6 +185,7 @@ static void HostTestApp_init(void);
 static void HostTestApp_taskFxn(UArg a0, UArg a1);
 
 static void HostTestApp_processGapEvent(ICall_HciExtEvt *pMsg);
+static void HostTestApp_processSmpEvent(ICall_HciExtEvt *pMsg);
 #ifdef RTLS_CTE_TEST
 static void HostTestApp_processTestEvent(ICall_HciExtEvt *pMsg);
 #endif
@@ -222,11 +229,12 @@ void HostTestApp_createTask(void)
 
   // Configure task
   Task_Params_init(&taskParams);
+  taskParams.name = "host_test_app";
   taskParams.stack = htaTaskStack;
   taskParams.stackSize = HTA_TASK_STACK_SIZE;
   taskParams.priority = HTA_TASK_PRIORITY;
 
-  Task_construct(&htaTask, HostTestApp_taskFxn, &taskParams, NULL);
+  Task_construct(&gHost_TestAPP_Data.htaTask, HostTestApp_taskFxn, &taskParams, NULL);
 }
 
 /*********************************************************************
@@ -245,7 +253,7 @@ static void HostTestApp_init(void)
 {
   // Register the current thread as an ICall dispatcher application
   // so that the application can send and receive messages.
-  ICall_registerApp(&selfEntity, &Host_TestApp_syncEvent);
+  ICall_registerApp(&gHost_TestAPP_Data.selfEntity, &gHost_TestAPP_Data.syncEvent);
 
 #ifdef USE_FPGA
   #if defined(CC26X2)
@@ -309,17 +317,17 @@ static void HostTestApp_init(void)
                                        INTERCEPT);
 
   HCI_TL_Init(NULL, (HCI_TL_CommandStatusCB_t) HostTestApp_sendToNPI,
-               Host_TestApp_postCallbackEvent, selfEntity);
+               Host_TestApp_postCallbackEvent, gHost_TestAPP_Data.selfEntity);
 
   HCI_TL_getCmdResponderID(ICall_getLocalMsgEntityId(ICALL_SERVICE_CLASS_BLE_MSG,
-                                                     selfEntity));
+                                                     gHost_TestAPP_Data.selfEntity));
 #endif /* ICALL_LITE */
 
   dispHandle = Display_open(Display_Type_LCD, NULL);
 
   // Register for unprocessed HCI/Host event messages
 #if defined(HOST_CONFIG)
-  GAP_RegisterForMsgs(selfEntity);
+  GAP_RegisterForMsgs(gHost_TestAPP_Data.selfEntity);
 
 #if (HOST_CONFIG & (CENTRAL_CFG | PERIPHERAL_CFG) )
   // Initialize GATT Client
@@ -419,7 +427,15 @@ static void HostTestApp_init(void)
 #endif // HOST_CONFIG
 
   // Create a Tx Queue instance
-  Host_testApp_Queue = Queue_create(NULL, NULL);
+
+  gHost_TestAPP_Data.queueAttr.mq_flags =  O_CREAT | O_RDWR | O_NONBLOCK;
+  gHost_TestAPP_Data.queueAttr.mq_curmsgs = 0;
+  gHost_TestAPP_Data.queueAttr.mq_maxmsg = HOST_TEST_SCAN_Q_SIZE;
+  gHost_TestAPP_Data.queueAttr.mq_msgsize = sizeof(Host_TestAPP_QueueRec);
+
+  /* Create the Non-Blocking message queue */
+  gHost_TestAPP_Data.queueHandle = mq_open("Host_testApp_Queue", O_CREAT | O_RDWR | O_NONBLOCK, 0, &gHost_TestAPP_Data.queueAttr);
+
 
 #if defined(GAP_BOND_MGR) && defined (EXCLUDE_SM)
   uint8_t pairMode = GAPBOND_PAIRING_MODE_NO_PAIRING;
@@ -438,15 +454,15 @@ static void HostTestApp_init(void)
  */
 static void HostTestApp_taskFxn(UArg a0, UArg a1)
 {
+  uint32_t events;
+
   // Initialize application
   HostTestApp_init();
 
   // Application main loop
   for (;;)
   {
-    uint32_t events;
-
-    events = Event_pend(Host_TestApp_syncEvent, Event_Id_NONE, HTA_ALL_EVENTS,
+    events = Event_pend(gHost_TestAPP_Data.syncEvent, Event_Id_NONE, HTA_ALL_EVENTS,
                         ICALL_TIMEOUT_FOREVER);
 
     if (events)
@@ -460,7 +476,7 @@ static void HostTestApp_taskFxn(UArg a0, UArg a1)
       {
         bool dealloc = true;
 
-        if ((src == ICALL_SERVICE_CLASS_BLE) && (dest == selfEntity))
+        if ((src == ICALL_SERVICE_CLASS_BLE) && (dest == gHost_TestAPP_Data.selfEntity))
         {
 #ifdef ICALL_LITE
           ICall_Stack_Event *pEvt = (ICall_Stack_Event *)pMsg;
@@ -491,18 +507,16 @@ static void HostTestApp_taskFxn(UArg a0, UArg a1)
         }
       }
 
-      if( events & HOST_TL_CALLBACK_EVENT)
+// The following code line was commented out intentionally.
+// mq_getattr is useful for debug as gHost_TestAPP_Data.queueAttr.mq_curmsgs represents the current number of queued messages.
+//      mq_getattr(gHost_TestAPP_Data.queueHandle, &gHost_TestAPP_Data.queueAttr);
+
+      // Push the pending Async Msg to the host.
+      if (Host_TestApp_Queue_ProcessCbkEvent())
       {
-        if (!Queue_empty(Host_testApp_Queue))
-        {
-          // Push the pending Async Msg to the host.
-          if ( Host_TestApp_Queue_ProcessCbkEvent())
-          {
-            // Q was not empty, there's could be more to handle so preserve the
-            // flag and repost to the task.
-            Event_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
-          }
-        }
+        // Q was not empty, there's could be more to handle so preserve the
+        // flag and repost to the task.
+        Event_post(gHost_TestAPP_Data.syncEvent, HOST_TL_CALLBACK_EVENT);
       }
     }
   }
@@ -563,6 +577,13 @@ uint8_t HostTestApp_processStackMsg(hciPacket_t *pBuf)
     // There should only be few of these.
     HostTestApp_processGapEvent((ICall_HciExtEvt *) pBuf);
 
+    return(TRUE);
+  }
+  else if ( pBuf->hdr.event == HCI_SMP_EVENT_EVENT)
+  {
+    // Structured Host Event from HCI that Host did not process.
+    // Process SMP events
+    HostTestApp_processSmpEvent((ICall_HciExtEvt*)pBuf);
     return(TRUE);
   }
   else
@@ -736,6 +757,48 @@ static void HostTestApp_processTestEvent(ICall_HciExtEvt *pMsg)
   }
 }
 #endif
+
+/*********************************************************************
+ * @fn      HostTestApp_processSmpEvent
+ *
+ * @brief   Process an incoming Smp Event.
+
+ * @param   pMsg - message to process
+ *
+ * @return  None.
+ */
+static void HostTestApp_processSmpEvent(ICall_HciExtEvt *pMsg)
+{
+  hciEvt_BLEPhyUpdateComplete_t *pEvt = (hciEvt_BLEPhyUpdateComplete_t *)pMsg;
+  uint8 event[HCI_LONG_TERM_KEY_REQ_EVENT_LEN];
+  uint8 eventLen;
+
+  switch (pEvt->BLEEventCode)
+  {
+    case HCI_BLE_LTK_REQUESTED_EVENT:
+      {
+        hciEvt_BLELTKReq_t *pkt = (hciEvt_BLELTKReq_t *) pEvt;
+        event[0] = pkt->BLEEventCode;                                       // event code
+        event[1] = LO_UINT16(pkt->connHandle);                              // connection handle (LSB)
+        event[2] = HI_UINT16(pkt->connHandle);                              // connection handle (MSB)
+        memcpy(&event[3], &pkt->random, B_RANDOM_NUM_SIZE);
+        event[3 + B_RANDOM_NUM_SIZE] = LO_UINT16(pkt->encryptedDiversifier); // encrypted Diversifier (LSB)
+        event[4 + B_RANDOM_NUM_SIZE] = HI_UINT16(pkt->encryptedDiversifier); // encrypted Diversifier (MSB)
+        eventLen = HCI_LONG_TERM_KEY_REQ_EVENT_LEN;
+      }
+      break;
+
+    default:
+      eventLen = 0;
+      break;
+  }
+
+  if (eventLen > 0)
+  {
+    // Send BLE Complete Event
+    sendBLECompleteEvent(eventLen, event);
+  }
+}
 /*********************************************************************
  * @fn      HostTestApp_processBLEEvent
  *
@@ -837,7 +900,7 @@ static void sendCommandCompleteEvent(uint8_t eventCode, uint16_t opcode,
                    HCI_CMD_VS_COMPLETE_EVENT_LEN);
 
   // allocate memory for Icall hdr + packet
-  msg = (npiPkt_t *)ICall_allocMsg(totalLength);
+  msg = (npiPkt_t *)ICall_allocMsgLimited(totalLength);
   if (msg)
   {
     // Icall message event, status, and pointer to packet
@@ -861,13 +924,20 @@ static void sendCommandCompleteEvent(uint8_t eventCode, uint16_t opcode,
 
       txLen += 4;
 
-      // remaining event parameters
-      (void)memcpy(&msg->pData[6], param, numParam);
+      if ((numParam > 0) && (NULL != param))
+      {
+        // remaining event parameters
+        (void)memcpy(&msg->pData[6], param, numParam);
 
-      txLen += numParam;
+        txLen += numParam;
+      }
     }
     else // it is a vendor specific event
     {
+      if (NULL == param)
+      {
+        return;
+      }
       // less one byte as number of complete packets not used in vendor specific event
       msg->pData[2] = numParam + HCI_CMD_VS_COMPLETE_EVENT_LEN;
       msg->pData[3] = param[0];            // event parameter 0: event opcode LSB
@@ -878,11 +948,14 @@ static void sendCommandCompleteEvent(uint8_t eventCode, uint16_t opcode,
 
       txLen += 6;
 
-      // remaining event parameters
-      // Note: The event opcode and status were already placed in the msg packet.
-      (void)memcpy(&msg->pData[8], &param[3], numParam-HCI_EVENT_MIN_LENGTH);
+      if (numParam - HCI_EVENT_MIN_LENGTH > 0)
+      {
+        // remaining event parameters
+        // Note: The event opcode and status were already placed in the msg packet.
+        (void)memcpy(&msg->pData[8], &param[3], numParam-HCI_EVENT_MIN_LENGTH);
 
-      txLen += (numParam-HCI_EVENT_MIN_LENGTH);
+        txLen += (numParam-HCI_EVENT_MIN_LENGTH);
+      }
     }
 
     msg->pktLen = txLen;
@@ -911,7 +984,7 @@ static void sendCommandStatusEvent(uint8_t eventCode, uint16_t status,
                 HCI_CMD_STATUS_EVENT_LEN;
 
   // allocate memory for Icall hdr + packet
-  msg = (npiPkt_t *)ICall_allocMsg(totalLength);
+  msg = (npiPkt_t *)ICall_allocMsgLimited(totalLength);
   if (msg)
   {
     // Icall message event, status, and pointer to packet
@@ -952,7 +1025,7 @@ static void sendBLECompleteEvent(uint8_t eventLen, uint8 *pEvent)
   totalLength = sizeof(npiPkt_t) + HCI_EVENT_MIN_LENGTH + eventLen;
 
   // allocate memory for Icall hdr + packet
-  msg = (npiPkt_t *)ICall_allocMsg(totalLength);
+  msg = (npiPkt_t *)ICall_allocMsgLimited(totalLength);
   if (msg)
   {
     // Icall message event, status, and pointer to packet
@@ -992,11 +1065,8 @@ void HostTestApp_handleNPIRxInterceptEvent(uint8_t *pMsg)
 {
   HCI_TL_SendToStack(((NPIMSG_msg_t *)pMsg)->pBuf);
 
-  // The data is stored as a message, free this first.
-  ICall_freeMsg(((NPIMSG_msg_t *)pMsg)->pBuf);
-
-  // Free container.
-  ICall_free(pMsg);
+  // Free the NPI message
+  NPITask_freeNpiMsg(pMsg);
 }
 
 /*********************************************************************
@@ -1012,17 +1082,21 @@ void HostTestApp_handleNPIRxInterceptEvent(uint8_t *pMsg)
  */
 static void HostTestApp_sendToNPI(uint8_t *buf, uint16_t len)
 {
-  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsg(sizeof(npiPkt_t) + len);
+  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsgLimited(sizeof(npiPkt_t) + len);
 
   if (pNpiPkt)
   {
     pNpiPkt->hdr.event = buf[0]; //Has the event status code in first byte of payload
     pNpiPkt->hdr.status = 0xFF;
     pNpiPkt->pktLen = len;
-    pNpiPkt->pData  = (uint8 *)(pNpiPkt + 1);
+    pNpiPkt->pData = NULL;
 
-    memcpy(pNpiPkt->pData, buf, len);
+    if (len > 0)
+    {
+      pNpiPkt->pData  = (uint8 *)(pNpiPkt + 1);
 
+      memcpy(pNpiPkt->pData, buf, len);
+    }
     // Send to NPI
     // Note: there is no need to free this packet.  NPI will do that itself.
     NPITask_sendToHost((uint8_t *)pNpiPkt);
@@ -1043,21 +1117,23 @@ static void HostTestApp_sendToNPI(uint8_t *buf, uint16_t len)
  */
 uint8_t Host_TestApp_postCallbackEvent(void *pData, void* callbackFctPtr)
 {
-  Host_TestAPP_QueueRec *recPtr;
+  Host_TestAPP_QueueRec rec;
+  int status;
 
-  recPtr = ICall_malloc(sizeof(Host_TestAPP_QueueRec));
-  if (recPtr)
+  rec.pData = pData;
+  rec.callbackFctPtr = callbackFctPtr;
+
+  // Enqueue the message.
+  status = mq_send(gHost_TestAPP_Data.queueHandle, (char*)&rec, sizeof(Host_TestAPP_QueueRec), 0);
+
+  if (status != 0)
   {
-    recPtr->pData = pData;
-    recPtr->callbackFctPtr = callbackFctPtr;
-    Queue_put(Host_testApp_Queue, &recPtr->_elem);
-    Event_post(Host_TestApp_syncEvent, HOST_TL_CALLBACK_EVENT);
-    return(true);
-  }
-  else
-  {
+    /* pData will be freed in the calling function*/
     return(false);
   }
+  Event_post(gHost_TestAPP_Data.syncEvent, HOST_TL_CALLBACK_EVENT);
+
+  return(true);
 }
 
 /*********************************************************************
@@ -1072,13 +1148,12 @@ uint8_t Host_TestApp_postCallbackEvent(void *pData, void* callbackFctPtr)
  */
 static uint8_t Host_TestApp_Queue_ProcessCbkEvent(void)
 {
-  //Get the Queue elem atomicaly:
-  Host_TestAPP_QueueRec *pRec = (Host_TestAPP_QueueRec*) Queue_dequeue(Host_testApp_Queue);
-  if (pRec != NULL)
+  Host_TestAPP_QueueRec rec;
+
+  if (mq_receive(gHost_TestAPP_Data.queueHandle, (char*)&rec, sizeof(Host_TestAPP_QueueRec), NULL) == sizeof(Host_TestAPP_QueueRec))
   {
     //List not Empty
-    ((void (*)(void*))(pRec->callbackFctPtr))(pRec->pData);
-    ICall_free(pRec);
+    ((void (*)(void*))(rec.callbackFctPtr))(rec.pData);
   }
   else
   {

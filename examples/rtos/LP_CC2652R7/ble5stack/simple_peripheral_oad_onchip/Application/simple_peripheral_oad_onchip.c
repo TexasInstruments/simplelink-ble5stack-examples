@@ -11,7 +11,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2017-2023, Texas Instruments Incorporated
+ Copyright (c) 2017-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -983,37 +983,44 @@ static uint8_t SimplePeripheral_processGATTMsg(gattMsgEvent_t *pMsg)
 static void SimplePeripheral_processAppMsg(spEvt_t *pMsg)
 {
   bool dealloc = TRUE;
-
   switch (pMsg->event)
   {
     case SP_CHAR_CHANGE_EVT:
+    {
       SimplePeripheral_processCharValueChangeEvt(*(uint8_t*)(pMsg->pData));
       break;
+    }
 
     case SP_KEY_CHANGE_EVT:
+    {
       SimplePeripheral_handleKeys(*(uint8_t*)(pMsg->pData));
       break;
-
+    }
     case SP_ADV_EVT:
+    {
       SimplePeripheral_processAdvEvent((spGapAdvEventData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_PAIR_STATE_EVT:
+    {
       SimplePeripheral_processPairState((spPairStateData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_PASSCODE_EVT:
+    {
       SimplePeripheral_processPasscode((spPasscodeData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_PERIODIC_EVT:
+    {
       SimplePeripheral_performPeriodicTask();
       break;
-
+    }
     case SP_READ_RPA_EVT:
+    {
       SimplePeripheral_updateRPA();
       break;
-
+    }
     case SP_SEND_PARAM_UPDATE_EVT:
     {
       // Extract connection handle from data
@@ -1027,13 +1034,15 @@ static void SimplePeripheral_processAppMsg(spEvt_t *pMsg)
     }
 
     case SP_CONN_EVT:
+    {
       SimplePeripheral_processConnEvt((Gap_ConnEventRpt_t *)(pMsg->pData));
       break;
-
+    }
     case SP_OAD_RESET_EVT:
+    {
       SimplePeripheral_processOadResetEvt((oadResetWrite_t *)(pMsg->pData));
       break;
-
+    }
     default:
       // Do nothing.
       break;
@@ -1241,7 +1250,7 @@ static void SimplePeripheral_processGapMessage(gapEventHdr_t *pMsg)
       rsp.connectionHandle = pReq->req.connectionHandle;
       rsp.signalIdentifier = pReq->req.signalIdentifier;
 
-      // Only accept connection intervals with slave latency of 0
+      // Only accept connection intervals with peripheral latency of 0
       // This is just an example of how the application can send a response
       if(pReq->req.connLatency == 0)
       {
@@ -2097,7 +2106,7 @@ static void SimplePeripheral_processParamUpdate(uint16_t connHandle)
 
   req.connectionHandle = connHandle;
 #ifdef DEFAULT_SEND_PARAM_UPDATE_REQ
-  req.connLatency = DEFAULT_DESIRED_SLAVE_LATENCY;
+  req.connLatency = DEFAULT_DESIRED_PERIPHERAL_LATENCY;
   req.connTimeout = DEFAULT_DESIRED_CONN_TIMEOUT;
   req.intervalMin = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
   req.intervalMax = DEFAULT_DESIRED_MAX_CONN_INTERVAL;

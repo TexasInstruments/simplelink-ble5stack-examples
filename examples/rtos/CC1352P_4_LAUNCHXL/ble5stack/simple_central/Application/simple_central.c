@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -2515,6 +2515,7 @@ bool SimpleCentral_doCancelConnecting(uint8_t index)
 bool SimpleCentral_doSelectConn(uint8_t index)
 {
   uint32_t itemsToDisable = SC_ITEM_NONE;
+  uint32_t itemsToEnable = SC_ITEM_NONE;
 
   // index cannot be equal to or greater than MAX_NUM_BLE_CONNS
   SIMPLECENTRAL_ASSERT(index < MAX_NUM_BLE_CONNS);
@@ -2529,6 +2530,11 @@ bool SimpleCentral_doSelectConn(uint8_t index)
     // Diable GATT Read/Write until simple service is found
     itemsToDisable = SC_ITEM_GATTREAD | SC_ITEM_GATTWRITE;
   }
+  else
+  {
+    // Enable GATT Read/Write
+    itemsToEnable = SC_ITEM_GATTREAD | SC_ITEM_GATTWRITE;
+  }
 
   // Set the menu title and go to this connection's context
   TBM_SET_TITLE(&scMenuPerConn, TBM_GET_ACTION_DESC(&scMenuSelectConn, index));
@@ -2537,12 +2543,12 @@ bool SimpleCentral_doSelectConn(uint8_t index)
   if (connList[index].pRssiClock == NULL)
   {
     tbm_setItemStatus(&scMenuPerConn,
-                      SC_ITEM_STRTRSSI, SC_ITEM_STOPRSSI | itemsToDisable);
+                      SC_ITEM_STRTRSSI | itemsToEnable, SC_ITEM_STOPRSSI | itemsToDisable);
   }
   else
   {
     tbm_setItemStatus(&scMenuPerConn,
-                      SC_ITEM_STOPRSSI, SC_ITEM_STRTRSSI | itemsToDisable);
+                      SC_ITEM_STOPRSSI| itemsToEnable, SC_ITEM_STRTRSSI | itemsToDisable);
   }
 
   // Clear non-connection-related message
@@ -2668,11 +2674,19 @@ bool SimpleCentral_doConnUpdate(uint8_t index)
   params.connectionHandle = scConnHandle;
   params.intervalMin = DEFAULT_UPDATE_MIN_CONN_INTERVAL;
   params.intervalMax = DEFAULT_UPDATE_MAX_CONN_INTERVAL;
-  params.connLatency = DEFAULT_UPDATE_SLAVE_LATENCY;
+  params.connLatency = DEFAULT_UPDATE_PERIPHERAL_LATENCY;
 
   linkDBInfo_t linkInfo;
   if (linkDB_GetInfo(scConnHandle, &linkInfo) == SUCCESS)
   {
+
+    // When using 'SimpleCentral_doConnUpdate', a lower level is expect to get
+    // an actual update of at least one of the params (connTimeout, connInterval, slaveLatency)
+    // otherwise it will reject the request without any indication to the
+    // application level, waiting to response.
+    // It leads to a case where no action is being taken with key press,
+    // therefore, updating the 'connTimeout' in 'SimpleCentral_doConnUpdate'
+    // trigger a response, which is important to create a correct process flow.
     if (linkInfo.connTimeout == DEFAULT_UPDATE_CONN_TIMEOUT)
     {
       params.connTimeout = DEFAULT_UPDATE_CONN_TIMEOUT + 200;
@@ -2681,6 +2695,7 @@ bool SimpleCentral_doConnUpdate(uint8_t index)
     {
       params.connTimeout = DEFAULT_UPDATE_CONN_TIMEOUT;
     }
+
     GAP_UpdateLinkParamReq(&params);
 
     Display_printf(dispHandle, SC_ROW_CUR_CONN, 0, "Param update Request:connTimeout =%d",

@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,12 @@ Target Device: cc13xx_cc26xx
 //! Includes
 //*****************************************************************************
 #include <string.h>
+#include <time.h>
 #include <ti/drivers/GPIO.h>
 #include <ti/bleapp/profiles/data_stream/data_stream_profile.h>
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
-#include <time.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Defines
@@ -95,15 +97,17 @@ static void DS_onCccUpdateCB( uint16 connHandle, uint16 pValue )
 {
   if ( pValue == DS_CCC_UPDATE_NOTIFICATION_ENABLED)
   {
-    Display_printf( dispHandle, dispIndex, 0,
-                    "#%5d    DataStream_cccUpdate: connectionHandle:%d Notifications enabled",
-                    dispIndex, connHandle ); dispIndex++;
+    MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0,
+                      "DataStream status: CCC Update - connectionHandle: "
+                      MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                      "Notifications enabled", connHandle);
   }
   else
   {
-    Display_printf( dispHandle, dispIndex, 0,
-                    "#%5d    DataStream_cccUpdate: connectionHandle:%d Notifications disabled ",
-                    dispIndex, connHandle ); dispIndex++;
+    MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0,
+                      "DataStream status: CCC Update - connectionHandle: "
+                      MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                      "Notifications disabled", connHandle);
   }
 }
 
@@ -123,6 +127,9 @@ static void DS_incomingDataCB( uint16 connHandle, char *pValue, uint16 len )
   char printData[len+1];
   uint16 i = 0;
 
+  // Clear lines
+  MenuModule_clearLines(APP_MENU_PROFILE_STATUS_LINE1, APP_MENU_PROFILE_STATUS_LINE3);
+
   // Toggle LEDs to indicate that data was received
   GPIO_toggle( CONFIG_GPIO_LED_RED );
   GPIO_toggle( CONFIG_GPIO_LED_GREEN );
@@ -130,9 +137,11 @@ static void DS_incomingDataCB( uint16 connHandle, char *pValue, uint16 len )
   // The incoming data length was too large
   if ( len == 0 )
   {
-    Display_printf( dispHandle, dispIndex, 0,
-                   "#%5d    DataStream_IncomingData: connectionHandle %d: Error: %s ",
-                   dispIndex, connHandle, dataOut ); dispIndex++;
+    MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0,
+                      "DataStream status: Incoming data - connectionHandle: "
+                      MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                      "Error: " MENU_MODULE_COLOR_RED "%s" MENU_MODULE_COLOR_RESET,
+                      connHandle, dataOut);
 
     // Send error message over GATT notification
     status = DSP_sendData( (uint8 *)dataOut, sizeof( dataOut ) );
@@ -146,9 +155,14 @@ static void DS_incomingDataCB( uint16 connHandle, char *pValue, uint16 len )
     printData[len] ='\0';
 
     // Print the incoming data
-    Display_printf( dispHandle, dispIndex, 0,
-                    "#%5d    DataStream_IncomingData: connectionHandle %d: length: %d data: %s",
-                    dispIndex, connHandle, len, printData ); dispIndex++;
+    MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0,
+                      "DataStream status: Incoming data - "
+                      "connectionHandle: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                      "length: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                      connHandle, len);
+    MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE2, 0,
+                      "Data: " MENU_MODULE_COLOR_YELLOW "%s" MENU_MODULE_COLOR_RESET,
+                      printData);
 
     // Change upper case to lower case and lower case to upper case
     for ( i = 0; i < len; i++ )
@@ -171,16 +185,16 @@ static void DS_incomingDataCB( uint16 connHandle, char *pValue, uint16 len )
       memcpy (printData, pValue, len );
 
       // Print the echo data
-      Display_printf( dispHandle, dispIndex, 0,
-                      "#%5d    DataStream_OutgoingData: connectionHandle %d: Echo data: %s",
-                      dispIndex, connHandle, printData ); dispIndex++;
+      MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE3, 0,
+                        "Echo: " MENU_MODULE_COLOR_YELLOW "%s" MENU_MODULE_COLOR_RESET,
+                        printData);
     }
     else
     {
       // Print error message
-      Display_printf( dispHandle, dispIndex, 0,
-                      "#%5d    DataStream_Pofile_SendData: status %d",
-                      dispIndex, status ); dispIndex++;
+      MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE3, 0,
+                        "Send data - Error: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                        status);
     }
   }
 }
@@ -197,10 +211,6 @@ static void DS_incomingDataCB( uint16 connHandle, char *pValue, uint16 len )
 bStatus_t DataStream_start( void )
 {
   bStatus_t status = SUCCESS;
-
-  Display_printf( dispHandle, dispIndex, 0,
-                  "#%5d    DataStream_start: Add Services",
-                  dispIndex ); dispIndex++;
 
   status = DSP_start( &ds_profileCB );
   if( status != SUCCESS )

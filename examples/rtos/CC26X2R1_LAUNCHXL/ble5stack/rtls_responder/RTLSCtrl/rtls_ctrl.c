@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2018-2023, Texas Instruments Incorporated
+ Copyright (c) 2018-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -48,25 +48,14 @@
  * INCLUDES
  */
 
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Queue.h>
-
 #include <string.h>
 #include <stdlib.h>
-
-#include <ti/sysbios/BIOS.h>
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/hal/Hwi.h>
-#include <ti/sysbios/knl/Swi.h>
-#include <driverlib/sys_ctrl.h>
-#include <driverlib/ioc.h>
 
 #include "util.h"
 #include "rtls_host.h"
 #include "rtls_ctrl.h"
 #include "rtls_ctrl_api.h"
+#include "onboard.h"
 
 #ifdef RTLS_CTE
 #include "rtls_ctrl_aoa.h"
@@ -162,6 +151,9 @@ typedef struct __attribute__((packed))
 // General data structure used for various RTLS Control operations
 typedef struct
 {
+  pthread_t threadId;
+  mqd_t     queueHandle;
+  uint16_t  termSyncHandle;
   pfnRtlsAppCb appCb;                   // RTLS Control callback to RTLS Application
 #ifdef RTLS_CTE
   rtlsAoa_t aoaControlBlock;            // This contains all AoA information
@@ -265,11 +257,14 @@ uint8_t maxNumClCteBufs = 1;
  */
 rtlsCtrlData_t gRtlsData =
 {
+  .threadId                 = NULL,
+  .queueHandle              = NULL,
   .appCb                    = NULL,
   .connStateBm              = (rtlsConnState_e *)0x00000000,
   .rtlsCapab.capab          = RTLS_CAP_NOT_INITIALIZED,
   .rtlsCapab.identifier     = {0},
-  .rssiFilter               = {0}
+  .rssiFilter               = {0},
+  .termSyncHandle           = 0xFFFF
 };
 
 char *rtlsReq_BleLogStrings[] = {
@@ -340,17 +335,6 @@ char *rtlsCmd_BleLogStrings[] = {
 /*********************************************************************
  * LOCAL VARIABLES
  */
-// Event globally used to post local events and pend on local events
-Event_Handle syncRtlsEvent;
-
-// Queue object used for app messages
-Queue_Struct rtlsCtrlMsg;
-Queue_Handle rtlsCtrlMsgQueue;
-
-// Task configuration
-Task_Struct rtlsTask;
-Char rtlsTaskStack[RTLS_CTRL_TASK_STACK_SIZE];
-uint16_t termSyncHandle = 0xFFFF;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -358,7 +342,7 @@ uint16_t termSyncHandle = 0xFFFF;
 
 // RTLS Control specific
 void RTLSCtrl_createTask(void);
-void RTLSCtrl_taskFxn(UArg a0, UArg a1);
+void *RTLSCtrl_taskFxn(void *);
 void RTLSCtrl_processMessage(rtlsEvt_t *pMsg);
 void RTLSCtrl_enqueueMsg(uint16_t eventId, uint8_t *pMsg);
 
@@ -498,12 +482,11 @@ void RTLSCtrl_connResultEvt(uint16_t connHandle, uint8_t status)
     }
     else if (status == RTLS_LINK_TERMINATED)
     {
+      gRtlsData.numActiveConns--;
       // We were disconnected, if AOA is enabled we should disable it
       if (gRtlsData.connStateBm[connHandle] & RTLS_STATE_AOA_ENABLED ||
           gRtlsData.connStateBm[connHandle] & RTLS_STATE_CONN_INFO_ENABLED)
       {
-        gRtlsData.numActiveConns--;
-
         RTLSCtrl_updateConnState((rtlsConnState_e)RTLS_STATE_CONNECTED, RTLS_FALSE, connHandle);
       }
 
@@ -743,8 +726,6 @@ void RTLSCtrl_terminateLinkCmd(uint8_t *connHandle)
 {
   rtlsStatus_e status = RTLS_SUCCESS;
 
-  gRtlsData.numActiveConns--;
-
   RTLSHost_sendMsg(RTLS_CMD_TERMINATE_LINK, HOST_SYNC_RSP, (uint8_t *)&status, sizeof(status));
 
   RTLSCtrl_callRtlsApp(RTLS_REQ_TERMINATE_LINK, connHandle);
@@ -848,26 +829,43 @@ rtlsStatus_e RTLSCtrl_updateConnState(rtlsConnState_e connState, uint8_t enableD
     gRtlsData.connStateBm[connHandle] &= ~(connState);
   }
 
-  if (gRtlsData.syncEnabled != RTLS_TRUE)
+  // Ask the RTLS Application to trigger RTLS Control module periodically
+  if ((syncReq = (rtlsEnableSync_t *)RTLSCtrl_malloc(sizeof(rtlsEnableSync_t))) == NULL)
   {
-    // Ask the RTLS Application to trigger RTLS Control module periodically
-    if ((syncReq = (rtlsEnableSync_t *)RTLSCtrl_malloc(sizeof(rtlsEnableSync_t))) == NULL)
-    {
-      // We failed to allocate, host was already notified, just exit
-      return RTLS_FAIL;
-    }
-
-    syncReq->enable = RTLS_TRUE;
-    syncReq->connHandle = connHandle;
-
-    // Enable/disable sync events
-    RTLSCtrl_callRtlsApp(RTLS_REQ_ENABLE_SYNC, (uint8_t *)syncReq);
-
-    gRtlsData.syncEnabled = RTLS_TRUE;
+    // We failed to allocate, host was already notified, just exit
+    return RTLS_FAIL;
   }
+
+  syncReq->enable = ((enableDisableFlag == RTLS_TRUE) && (gRtlsData.numActiveConns > 0)) ? RTLS_TRUE : RTLS_FALSE;
+  syncReq->connHandle = connHandle;
+
+  // Enable/disable sync events
+  RTLSCtrl_callRtlsApp(RTLS_REQ_ENABLE_SYNC, (uint8_t *)syncReq);
+
+  gRtlsData.syncEnabled = syncReq->enable;
 
   return RTLS_SUCCESS;
 }
+
+/*********************************************************************
+ * @fn      RTLSCtrl_softReset
+ *
+ * @design /ref 159098678
+ *
+ * @brief   SW Reset for device - debug purposes,
+ *          FREERTOS implementation
+ *
+ * @param   none
+ *
+ * @return  none
+ */
+//extern void resetISR(void);
+//
+//void RTLSCtrl_softReset(void)
+//{
+//    __disable_irq();
+//    resetISR();
+//}
 
 /*********************************************************************
  * @fn      RTLSCtrl_resetDevice
@@ -880,9 +878,12 @@ rtlsStatus_e RTLSCtrl_updateConnState(rtlsConnState_e connState, uint8_t enableD
  *
  * @return  none
  */
+
 void RTLSCtrl_resetDevice(void)
 {
-  SysCtrlSystemReset();
+//    RTLSCtrl_softReset();
+
+    SystemReset();
 }
 
 #ifdef RTLS_CTE
@@ -1494,28 +1495,17 @@ void RTLSCtrl_hostMsgCB(rtlsHostMsg_t *pMsg)
  */
 void RTLSCtrl_enqueueMsg(uint16_t eventId, uint8_t *pMsg)
 {
-  rtlsEvt_t *qMsg;
+  rtlsEvt_t rtlsCtrlMsg;
   uint8_t enqueueStatus;
-  volatile uint32 keyHwi;
-  rtlsStatus_e status = RTLS_OUT_OF_MEMORY;
+  rtlsStatus_e status = RTLS_FAIL;
 
-  // Here we allocate the RTLS Event itself
-  if ((qMsg = (rtlsEvt_t *)RTLSCtrl_malloc(sizeof(rtlsEvt_t))) == NULL)
-  {
-    return;
-  }
+  rtlsCtrlMsg.event = (rtlsEvtType_e)eventId;
+  rtlsCtrlMsg.pData = pMsg;
 
-  qMsg->event = (rtlsEvtType_e)eventId;
-  qMsg->pData = pMsg;
-
-  // Here we use Util to put the RTLS event into the RTLS Control Task queue
-  keyHwi = Hwi_disable();
-  enqueueStatus = Util_enqueueMsg(rtlsCtrlMsgQueue, syncRtlsEvent, (uint8_t *)qMsg);
-  Hwi_restore(keyHwi);
-
+  enqueueStatus = mq_send(gRtlsData.queueHandle,  (char*)&rtlsCtrlMsg, sizeof(rtlsCtrlMsg), 1);
 
   // Util failed to enqueue, report to host
-  if (enqueueStatus == FALSE)
+  if (enqueueStatus != 0)
   {
     RTLSHost_sendMsg(RTLS_EVT_ERROR, HOST_ASYNC_RSP, (uint8_t *)&status, sizeof(rtlsStatus_e));
   }
@@ -1583,15 +1573,14 @@ void RTLSCtrl_processMessage(rtlsEvt_t *pMsg)
  */
 void RTLSCtrl_createTask(void)
 {
-  Task_Params taskParams;
+  char *rtlsTaskStack;
+  rtlsTaskStack = (char *) RTLSCtrl_malloc( RTLS_CTRL_TASK_STACK_SIZE );
 
-  // Configure task
-  Task_Params_init(&taskParams);
-  taskParams.stack = rtlsTaskStack;
-  taskParams.stackSize = RTLS_CTRL_TASK_STACK_SIZE;
-  taskParams.priority = RTLS_CTRL_TASK_PRIORITY;
-
-  Task_construct(&rtlsTask, RTLSCtrl_taskFxn, &taskParams, NULL);
+  RTLSCtrl_createPTask(&gRtlsData.threadId,
+                        RTLSCtrl_taskFxn,
+                        RTLS_CTRL_TASK_PRIORITY,
+                        rtlsTaskStack,
+                        RTLS_CTRL_TASK_STACK_SIZE);
 }
 
 /*********************************************************************
@@ -1607,49 +1596,28 @@ void RTLSCtrl_createTask(void)
  *
  * @return  none
  */
-void RTLSCtrl_taskFxn(UArg a0, UArg a1)
+void *RTLSCtrl_taskFxn(void *arg)
 {
-  // Create an RTOS event used to wake up this application to process events.
-  syncRtlsEvent = Event_create(NULL, NULL);
-
-  if (syncRtlsEvent == NULL)
-  {
-    AssertHandler(RTLS_CTRL_ASSERT_CAUSE_NULL_POINTER_EXCEPT, 0);
-  }
-
   // Create an RTOS queue for messages
-  rtlsCtrlMsgQueue = Util_constructQueue(&rtlsCtrlMsg);
+  RTLSCtrl_createPQueue(&gRtlsData.queueHandle,
+                        "RTLSCtrl_rtlsCtrlMsgQueue",
+                         RTLS_QUEUE_SIZE,
+                         sizeof(rtlsEvt_t),
+                         0 /* Blocking */);
 
   // Initialize internal rssi alpha filter
   gRtlsData.rssiFilter.alphaValue = RTLS_CTRL_ALPHA_FILTER_VALUE;
   gRtlsData.rssiFilter.currentRssi = RTLS_CTRL_FILTER_INITIAL_RSSI;
 
-  // Check if soft reset was made (as a result of reset_device request from the host)
-  if (SysCtrlResetSourceGet() == RSTSRC_SYSRESET)
-  {
-    // Send response to the host that soft reset was made
-    RTLSHost_sendMsg(RTLS_CMD_RESET_DEVICE, HOST_ASYNC_RSP, 0, 0);
-  }
+  RTLSHost_sendMsg(RTLS_CMD_RESET_DEVICE, HOST_ASYNC_RSP, 0, 0);
 
+  rtlsEvt_t rtlsCtrlMsg;
   for(;;)
   {
-    volatile uint32 keyHwi;
-    uint32_t events = Event_pend(syncRtlsEvent, Event_Id_NONE, RTLS_CTRL_ALL_EVENTS, BIOS_WAIT_FOREVER);
-
-    // If RTOS queue is not empty, process npi message.
-    while(!Queue_empty(rtlsCtrlMsgQueue))
+    if (mq_receive(gRtlsData.queueHandle, (char*)&rtlsCtrlMsg, sizeof(rtlsCtrlMsg), NULL) == sizeof(rtlsCtrlMsg))
     {
-      keyHwi = Hwi_disable();
-      rtlsEvt_t *pMsg = (rtlsEvt_t *)Util_dequeueMsg(rtlsCtrlMsgQueue);
-      Hwi_restore(keyHwi);
-
-      if (pMsg)
-      {
-        // Process message.
-        RTLSCtrl_processMessage(pMsg);
-
-        RTLSUTIL_FREE(pMsg);
-      }
+      // Process message.
+      RTLSCtrl_processMessage(&rtlsCtrlMsg);
     }
   }
 }
@@ -1782,8 +1750,8 @@ void RTLSCtrl_processTerminateSyncEvt( void )
   // send hostMsg
   RTLSHost_sendMsg(RTLS_EVT_TERMINATE_SYNC, HOST_ASYNC_RSP, (uint8_t *)&status, sizeof(status));
 
-  // change the termSyncHandle back
-  termSyncHandle = 0xFFFF;
+  // change the gRtlsData.termSyncHandle back
+  gRtlsData.termSyncHandle = 0xFFFF;
 }
 
 /*********************************************************************
@@ -1893,13 +1861,13 @@ void RTLSCtrl_periodicAdvTerminateSyncCmd(uint8_t *syncHandle)
 {
   rtlsStatus_e status = RTLS_SUCCESS;
 
-  if( termSyncHandle != 0xFFFF )
+  if( gRtlsData.termSyncHandle != 0xFFFF )
   {
     status = RTLS_FAIL;
   }
   else
   {
-    termSyncHandle = *((uint16_t*)syncHandle);
+    gRtlsData.termSyncHandle = *((uint16_t*)syncHandle);
     RTLSCtrl_callRtlsApp(RTLS_REQ_TERMINATE_SYNC, (uint8_t *)syncHandle);
   }
 
@@ -2004,4 +1972,75 @@ void RTLSCtrl_clearPeriodicAdvListCmd( void )
 
   // Return status to the host
   RTLSHost_sendMsg(RTLS_CMD_CLEAR_ADV_LIST, HOST_SYNC_RSP, (uint8_t *)&status, sizeof(rtlsStatus_e));
+}
+// -----------------------------------------------------------------------------
+//! \brief      Create a POSIX task.
+//              In case the stackaddr is not provided, allocate it on the heap.
+//!
+//! \param    newthread     threadId
+//! \param    startroutine  Pointer to the task entry function
+//! \param    priority
+//! \param    stackaddr
+//! \param    stacksize
+//!
+//! \return   void
+// -----------------------------------------------------------------------------
+int RTLSCtrl_createPTask(pthread_t *newthread, void *(*startroutine)(void *), int priority, void *stackaddr, size_t stacksize)
+{
+
+  int retVal = 0;
+  pthread_attr_t param_attribute;
+  struct sched_param param;
+
+  // Task Stack was not pre-allocated by user.
+  // Allocate it.
+  if ((char *)stackaddr == NULL)
+  {
+    // Allocated space for task stack.
+    RTLSCtrl_malloc(stacksize);
+
+    if ((char *)stackaddr == NULL)
+    {
+      // Failed to allocate
+        return -1 /*ERROR*/;
+    }
+  }
+  retVal =  pthread_attr_init(&param_attribute);
+  param.sched_priority = priority;
+
+  retVal |= pthread_attr_setschedparam(&param_attribute, &param);
+  retVal |= pthread_attr_setstack(&param_attribute, stackaddr, stacksize);
+  retVal |= pthread_attr_setdetachstate(&param_attribute, PTHREAD_CREATE_DETACHED);
+
+  retVal |= pthread_create(newthread,
+                        &param_attribute,
+                        startroutine,
+                        NULL);
+  return retVal;
+}
+
+// -----------------------------------------------------------------------------
+//! \brief      Create a POSIX queue.
+//!
+//! \param    queueHandle     queue handle
+//! \param    mq_name         name
+//! \param    mq_size         number of elements for the queue
+//! \param    mq_msgsize      size of queue element
+//! \param    mq_flags        flags
+//!
+//! \return   void
+// -----------------------------------------------------------------------------
+int RTLSCtrl_createPQueue(mqd_t *queueHandle, char *mq_name, uint32_t mq_size, uint32_t mq_msgsize, uint32_t mq_flags)
+{
+  struct mq_attr attr;
+
+  attr.mq_flags =  O_CREAT | O_RDWR | mq_flags;
+  attr.mq_curmsgs = 0;
+  attr.mq_maxmsg = mq_size;
+  attr.mq_msgsize = mq_msgsize;
+
+  /* Create the message queue */
+  *queueHandle = mq_open(mq_name, O_CREAT | O_RDWR | mq_flags, 0, &attr);
+
+  return SUCCESS;
 }

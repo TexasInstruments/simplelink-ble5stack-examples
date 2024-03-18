@@ -635,8 +635,18 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/ble5stack/oad/oad_persistent_postbuild.bat $TARGET_BPATH$ $PROJ_DIR$ $CONFIG_NAME$ $PROJ_FNAME$ $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$ $EXE_DIR$ $TARGET_BNAME$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/oad/oad_image_tool --verbose iar $TARGET_DIR$ 0 -hex1 $TARGET_DIR$/$TARGET_BNAME$.hex -k $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/oad/private.pem -o $TARGET_DIR$/$TARGET_BNAME$_oad</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+            </buildActions>
             </data>
         </settings>
         <settings>
@@ -1597,8 +1607,18 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
-                <postbuild>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/ble5stack/oad/oad_persistent_postbuild.bat $TARGET_BPATH$ $PROJ_DIR$ $CONFIG_NAME$ $PROJ_FNAME$ $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$ $EXE_DIR$ $TARGET_BNAME$</postbuild>
+                <buildActions>
+                        <buildAction>
+                            <cmdline>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/oad/oad_image_tool --verbose iar $TARGET_DIR$ 0 -hex1 $TARGET_DIR$/$TARGET_BNAME$.hex -k $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/tools/common/oad/private.pem -o $TARGET_DIR$/$TARGET_BNAME$_oad</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+                        <buildAction>
+                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                            <buildSequence>postLink</buildSequence>
+                        </buildAction>
+            </buildActions>
             </data>
         </settings>
         <settings>

@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 #include <string.h>
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 #include "ti/bleapp/profiles/oad/oad_profile.h"
 #include "ti/bleapp/util/sw_update/sw_update.h"
 
@@ -71,46 +73,31 @@ OADProfile_AppCommand_e App_OADCallback(OADProfile_App_Msg_e msg)
     {
         case OAD_PROFILE_MSG_REVOKE_IMG_HDR:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    App_OADCallback: Revoke image header",
-                           dispIndex
-                           ); dispIndex++;
+            MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0, "App_OADCallback: Revoke image header");
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
         case OAD_PROFILE_MSG_NEW_IMG_IDENDIFY:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    App_OADCallback: New image identify",
-                           dispIndex
-                           ); dispIndex++;
+            MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0, "App_OADCallback: New image identify");
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
         case OAD_PROFILE_MSG_START_DOWNLOAD:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    App_OADCallback: Download new image",
-                           dispIndex
-                           ); dispIndex++;
+            MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0, "App_OADCallback: Download new image");
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
         case OAD_PROFILE_MSG_FINISH_DOWNLOAD:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    App_OADCallback: Download complete",
-                           dispIndex
-                           ); dispIndex++;
+            MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0, "App_OADCallback: Download complete");
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
         case OAD_PROFILE_MSG_RESET_REQ:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    App_OADCallback: Reset device",
-                           dispIndex
-                           ); dispIndex++;
+            MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE1, 0, "App_OADCallback: Reset device");
             cmd = OAD_PROFILE_PROCEED;
             break;
         }
@@ -127,7 +114,6 @@ OADProfile_AppCommand_e App_OADCallback(OADProfile_App_Msg_e msg)
  *
  * @return  SUCCESS or stack call status
  */
-
 bStatus_t OAD_start(void)
 {
   bStatus_t status = SUCCESS;
@@ -137,13 +123,10 @@ bStatus_t OAD_start(void)
   //APP_HDR_ADDR is the place in the flash memory of APP header, and it is imported from the predefined symbols
   //SwUpdate_GetSWVersion function extract image version struct from given address
   struct image_version * img_ver = (struct image_version *)SwUpdate_GetSWVersion(APP_HDR_ADDR);
-  Display_printf(dispHandle, dispIndex, 0,
-                 "#%5d    App version: %d.%d.%d.%d",
-                 dispIndex,
-                 img_ver->iv_major,
-                 img_ver->iv_minor,
-                 img_ver->iv_revision,
-                 img_ver->iv_build_num
-                 ); dispIndex++;
+  MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "App version: %d.%d.%d.%d",
+                    img_ver->iv_major,
+                    img_ver->iv_minor,
+                    img_ver->iv_revision,
+                    img_ver->iv_build_num);
   return ( status );
 }

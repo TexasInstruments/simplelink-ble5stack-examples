@@ -15,7 +15,7 @@ In the events handler functions, write what actions are done after each event.
 In this example, When a peer is found (Advertise report), A message will be
 printed after enabling scanning or when advertise report
 
-In the Central_start() function at the bottom of the file, registration,
+In the Observer_start() function at the bottom of the file, registration,
 initialization and activation are done using the BLEAppUtil API functions,
 using the structures defined in the file.
 
@@ -26,7 +26,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -66,14 +66,18 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 //! Includes
 //*****************************************************************************
+#include <string.h>
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Local Functions
 //*****************************************************************************
 
 void Observer_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData);
+void Observer_addScanRes(GapScan_Evt_AdvRpt_t *pScanRpt);
 
 //*****************************************************************************
 //! Globals
@@ -84,62 +88,65 @@ BLEAppUtil_EventHandler_t observerScanHandler =
     .handlerType    = BLEAPPUTIL_GAP_SCAN_TYPE,
     .pEventHandler  = Observer_ScanEventHandler,
     .eventMask      = BLEAPPUTIL_SCAN_ENABLED |
+                      BLEAPPUTIL_SCAN_DISABLED |
                       BLEAPPUTIL_ADV_REPORT
 };
 
 const BLEAppUtil_ScanInit_t observerScanInitParams =
 {
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .primPhy                    = SCAN_PRIM_PHY_1M,
+    .primPhy                    = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_TYPE_ACTIVE | SCAN_TYPE_PASSIVE */
-    .scanType                   = SCAN_TYPE_ACTIVE,
+    .scanType                   = DEFAULT_SCAN_TYPE,
 
     /*! Scan interval shall be greater than or equal to scan window */
-    .scanInterval               = 800, /* Units of 625 us */
+    .scanInterval               = DEFAULT_SCAN_INTERVAL, /* Units of 625 us */
 
     /*! Scan window shall be less than or equal to scan interval */
-    .scanWindow                 = 800, /* Units of 625 us */
+    .scanWindow                 = DEFAULT_SCAN_WINDOW, /* Units of 625 us */
 
     /*! Select which fields of an advertising report will be stored */
     /*! in the AdvRptList, For mor field see @ref Gap_scanner.h     */
-    .advReportFields            = SCAN_ADVRPT_FLD_ADDRESS | SCAN_ADVRPT_FLD_ADDRTYPE,
+    .advReportFields            = ADV_RPT_FIELDS,
 
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .scanPhys                   = SCAN_PRIM_PHY_1M,
+    .scanPhys                   = DEFAULT_SCAN_PHY,
 
     /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_WL | SCAN_FLT_POLICY_ALL_RPA
      *  | SCAN_FLT_POLICY_WL_RPA */
-    .fltPolicy                  = SCAN_FLT_POLICY_ALL,
+    .fltPolicy                  = SCANNER_FILTER_POLICY,
 
     /*! For more filter PDU @ref Gap_scanner.h */
-    .fltPduType                 = SCAN_FLT_PDU_CONNECTABLE_ONLY |
-                                  SCAN_FLT_PDU_COMPLETE_ONLY,
+    .fltPduType                 = SCANNER_FILTER_PDU_TYPE,
 
     /*! Opt SCAN_FLT_RSSI_ALL | SCAN_FLT_RSSI_NONE */
-    .fltMinRssi                 = SCAN_FLT_RSSI_ALL,
+    .fltMinRssi                 = SCANNER_FILTER_MIN_RSSI,
 
     /*! Opt SCAN_FLT_DISC_NONE | SCAN_FLT_DISC_GENERAL | SCAN_FLT_DISC_LIMITED
      *  | SCAN_FLT_DISC_ALL | SCAN_FLT_DISC_DISABLE */
-    .fltDiscMode                = SCAN_FLT_DISC_DISABLE,
+    .fltDiscMode                = SCANNER_FILTER_DISC_MODE,
 
     /*! Opt SCAN_FLT_DUP_ENABLE | SCAN_FLT_DUP_DISABLE | SCAN_FLT_DUP_RESET */
-    .fltDup                     = SCAN_FLT_DUP_ENABLE
+    .fltDup                     = SCANNER_DUPLICATE_FILTER
 };
 
 const BLEAppUtil_ScanStart_t observerScanStartParams =
 {
     /*! Zero for continuously scanning */
-    .scanPeriod     = 0, /* Units of 1.28sec */
+    .scanPeriod     = DEFAULT_SCAN_PERIOD, /* Units of 1.28sec */
 
     /*! Scan Duration shall be greater than to scan interval,*/
     /*! Zero continuously scanning. */
-    .scanDuration   = 0, /* Units of 10ms */
+    .scanDuration   = DEFAULT_SCAN_DURATION, /* Units of 10ms */
 
     /*! If non-zero, the list of advertising reports will be */
     /*! generated and come with @ref GAP_EVT_SCAN_DISABLED.  */
-    .maxNumReport   = 0
+    .maxNumReport   = APP_MAX_NUM_OF_ADV_REPORTS
 };
+
+static App_scanResults observerScanRes[APP_MAX_NUM_OF_ADV_REPORTS] = {0};
+static uint8 observerScanIndex = 0;
 
 //*****************************************************************************
 //! Functions
@@ -159,24 +166,48 @@ const BLEAppUtil_ScanStart_t observerScanStartParams =
  */
 void Observer_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 {
+    BLEAppUtil_ScanEventData_t *scanMsg = (BLEAppUtil_ScanEventData_t *)pMsgData;
     switch (event)
     {
         /*! This event happens after detecting peer, an event for each peer */
         case BLEAPPUTIL_ADV_REPORT:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    GAP_EVT_ADV_REPORT: Discover",
-                           dispIndex); dispIndex++;
+            MenuModule_printf(APP_MENU_SCAN_EVENT, 0, "Scan status: Adv report");
 
             break;
         }
 
         case BLEAPPUTIL_SCAN_ENABLED:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    GAP_EVT_SCAN_ENABLED: scan discovering...",
-                           dispIndex); dispIndex++;
+            MenuModule_printf(APP_MENU_SCAN_EVENT, 0, "Scan status: Scan started...");
 
+            break;
+        }
+
+        case BLEAPPUTIL_SCAN_DISABLED:
+        {
+            uint8 i;
+
+            for(int i = 0; i < APP_MAX_NUM_OF_ADV_REPORTS; i++)
+            {
+                memset(&observerScanRes[i], 0, sizeof(App_scanResults));
+            }
+
+            // Go over the advertise reports that was saved in the host level and save it
+            for (i = 0; i < scanMsg->pBuf->pScanDis.numReport; i++)
+            {
+              GapScan_Evt_AdvRpt_t advReport;
+              // Get the address from the report
+              GapScan_getAdvReport(i, &advReport);
+              // Add the report to the scan list
+              Observer_addScanRes(&advReport);
+            }
+
+            MenuModule_printf(APP_MENU_SCAN_EVENT, 0, "Scan status: Scan disabled - "
+                              "Reason: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET
+                              "Num results: " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                              scanMsg->pBuf->pScanDis.reason,
+                              scanMsg->pBuf->pScanDis.numReport);
             break;
         }
 
@@ -186,6 +217,40 @@ void Observer_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
         }
     }
 
+}
+
+/*********************************************************************
+ * @fn      Observer_addScanRes
+ *
+ * @brief   Add a scan result to the scan results list
+ *
+ * @param   pScanRpt - the adv report to take the data from
+ *
+ * @return  none
+ */
+void Observer_addScanRes(GapScan_Evt_AdvRpt_t *pScanRpt)
+{
+    if(observerScanIndex < APP_MAX_NUM_OF_ADV_REPORTS)
+    {
+        observerScanRes[observerScanIndex].addressType = pScanRpt->addrType;
+        memcpy(observerScanRes[observerScanIndex].address, pScanRpt->addr, B_ADDR_LEN);
+        observerScanIndex++;
+    }
+}
+
+/*********************************************************************
+ * @fn      Scan_getScanResList
+ *
+ * @brief   Get the scan result list
+ *
+ * @param   scanRes - a scan list pointer
+ *
+ * @return  The number of results in the list
+ */
+uint8 Scan_getScanResList(App_scanResults **scanRes)
+{
+    *scanRes = observerScanRes;
+    return observerScanIndex;
 }
 
 /*********************************************************************
@@ -200,40 +265,32 @@ void Observer_ScanEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 bStatus_t Observer_start()
 {
-    bStatus_t status;
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Observer_start: Register Handlers",
-                   dispIndex); dispIndex++;
+    bStatus_t status = SUCCESS;
 
     // Register the handlers
     status = BLEAppUtil_registerEventHandler(&observerScanHandler);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Observer_start: Init Scan Params",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_scanInit(&observerScanInitParams);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Observer_start: Scan Start",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_scanStart(&observerScanStartParams);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
 
-    return SUCCESS;
+    // Return status value
+    return(status);
 }
 
 #endif // ( HOST_CONFIG & ( OBSERVER_CFG ) )

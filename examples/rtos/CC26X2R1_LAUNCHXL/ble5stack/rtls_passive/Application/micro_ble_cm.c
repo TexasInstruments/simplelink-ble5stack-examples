@@ -5,24 +5,18 @@
 #include <stdlib.h>
 
 #include <ti/display/Display.h>
-#include <ti/sysbios/hal/Hwi.h>
-#include <ti/sysbios/knl/Swi.h>
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Queue.h>
-#include <ti/sysbios/BIOS.h>
 #include "bcomdef.h"
 
 #include <ti_drivers_config.h>
 #include "board_key.h"
 
 #include "ugap.h"
-#include "urfc.h"
-
+#include <uble.h>
+#include "ull.h"
 #include "util.h"
 
 #include "micro_ble_cm.h"
+#include "rtls_ctrl.h"
 #include "rtls_ctrl_api.h"
 
 /*********************************************************************
@@ -38,7 +32,7 @@
 #define BLE_RAT_IN_140US             560  // Rx Back-end Time
 #define BLE_RAT_IN_150US             600  // T_IFS
 #define BLE_RAT_IN_256US             1024 // Radio Overhead + FS Calibration
-#define BLE_RAT_IN_1515US            6063 // Two thrid of the maximum packet size
+#define BLE_RAT_IN_1515US            6063 // Two third of the maximum packet size
 #define BLE_RAT_IN_2021US            8084 // Maximum packet size
 
 #define BLE_SYNTH_CALIBRATION        (BLE_RAT_IN_256US)
@@ -309,7 +303,7 @@ static uint8_t removeConnSortedList(int8_t sessionId, int8_t freeElem)
  */
 static void realignConnSortedList(void)
 {
-  uint32_t     currentTime = RF_getCurrentTime();
+  uint32_t     currentTime = ull_getCurrentTime();
   cmListElem_t *elem;
 
   while (uble_timeCompare(currentTime, cmConnSortedList->startTime))
@@ -577,7 +571,7 @@ uint8_t ubCM_findNextPriorityEvt(void)
   uint8_t       selectedSessionId = CM_INVALID_SESSION_ID;
   uint8_t       earliestSessionId = CM_INVALID_SESSION_ID;
   uint8_t       numOfCollisionComprison = 0;
-  uint32_t      currentTime = RF_getCurrentTime();
+  uint32_t      currentTime = ull_getCurrentTime();
 
   // Realign connections sorted list.
   realignConnSortedList();
@@ -688,7 +682,7 @@ void ubCM_setupNextCMEvent(uint8_t sessionId)
   uint32_t          deltaTime;
   volatile uint32   keySwi;
   volatile uint32_t keyHwi;
-  uint32_t          currentTime = RF_getCurrentTime();
+  uint32_t          currentTime = ull_getCurrentTime();
 
   keySwi = Swi_disable();
 
@@ -850,19 +844,20 @@ static void monitor_stateChangeCB(ugapMonitorState_t newState)
 static void monitor_indicationCB(bStatus_t status, uint8_t sessionId,
                                  uint8_t len, uint8_t *pPayload)
 {
-  uint8_t  rawRssi;
   int8_t   rssi;
   uint32_t timeStamp;
   ubCM_ConnInfo_t *connInfo;
   packetReceivedEvt_t *pPacketInfo;
-  rfStatus_t rfStatus;
   volatile uint32_t keyHwi;
-  uint32_t currentTime = RF_getCurrentTime();
+  uint32_t currentTime = ull_getCurrentTime();
 
   // Access the connection info array
   connInfo = &ubCMConnInfo.ArrayOfConnInfo[sessionId-1];
 
   // Copy RF status
+#ifndef USE_RCL
+  uint8_t  rawRssi;
+  rfStatus_t rfStatus;
   memcpy(&rfStatus, pPayload + len + CM_RFSTATUS_OFFSET, sizeof(rfStatus));
 
   //  We would like to check if the RSSI that we received is valid
@@ -881,8 +876,12 @@ static void monitor_indicationCB(bStatus_t status, uint8_t sessionId,
     // CRC is bad
     rssi = CM_RSSI_NOT_AVAILABLE;
   }
-
   timeStamp = *(uint32_t *)(pPayload + len + CM_TIMESTAMP_OFFSET);
+#else
+  /* We use memcpy here in order to avoid memory alignment issues (aka in FREERTOS)*/
+  memcpy((uint8_t*)&timeStamp, (pPayload + len + CM_TIMESTAMP_OFFSET), ULL_SUFFIX_TIMESTAMP_SIZE);
+  memcpy(&rssi,   (pPayload + len + CM_RSSI_OFFSET), ULL_SUFFIX_RSSI_SIZE);
+#endif
 
   keyHwi = Hwi_disable();
   pPacketInfo = malloc(sizeof(packetReceivedEvt_t));
@@ -983,6 +982,7 @@ static void monitor_completeCB(bStatus_t status, uint8_t sessionId)
   if (connInfo->consecutiveTimesMissed > BLE_CONSECUTIVE_MISSED_CONN_EVT_THRES)
   {
     pMonitorCompleteEvt->status = CM_FAILED_NOT_ACTIVE;
+    newSessionActive = FALSE;
   }
 
   if (pMonitorCompleteEvt->status != CM_FAILED_NOT_ACTIVE)
@@ -1125,7 +1125,7 @@ bool ubCm_init(pfnAppCb appCb)
     return FALSE;
   }
 
-  // Initilaize Micro GAP Monitor
+  // Initialize Micro GAP Monitor
   if (SUCCESS == ugap_monitorInit(&monitorCBs))
   {
     return TRUE;
@@ -1148,7 +1148,7 @@ uint8_t ubCM_isSessionActive(uint8_t sessionId)
 {
   ubCM_ConnInfo_t *connInfo;
 
-  if (sessionId == 0 || sessionId > CM_MAX_SESSIONS)
+  if (sessionId == CM_INVALID_SESSION_ID || sessionId > CM_MAX_SESSIONS)
   {
     // Not a valid sessionId or no CM session has started
     return CM_FAILED_NOT_FOUND;
@@ -1156,7 +1156,7 @@ uint8_t ubCM_isSessionActive(uint8_t sessionId)
 
   // Access the connection info array
   connInfo = &ubCMConnInfo.ArrayOfConnInfo[sessionId-1];
-  if (connInfo->sessionId == 0)
+  if (connInfo->sessionId == CM_INVALID_SESSION_ID)
   {
     // CM session has not been started
     return CM_FAILED_NOT_ACTIVE;
@@ -1191,7 +1191,7 @@ uint8_t ubCM_startNewSession(uint8_t hostConnHandle, uint32_t accessAddress,
                              uint8_t hopValue, uint8_t currChan,
                              uint8_t *chanMap, uint32_t crcInit)
 {
-  uint32_t          reqTime = RF_getCurrentTime();
+  uint32_t          reqTime = ull_getCurrentTime();
   volatile uint32_t keyHwi;
   cmNewConn_t       *elem;
 
@@ -1364,8 +1364,7 @@ uint8_t ubCM_InitCmSession(uint8_t hostConnHandle, uint32_t accessAddress,
 {
   //i's initial value will make cmStart() fail if ubCMConnInfo.numHandles >= CM_MAX_SESSIONS
   uint8_t           i = ubCMConnInfo.numHandles;
-  uint32_t          currTime = RF_getCurrentTime();
-  uint32_t          processingTime  = 0.4 * BLE_TO_RAT; // processing time 0.4 in 625us increments (250us)
+  uint32_t          currTime = ull_getCurrentTime();
   uint32_t          deltaTime;
   uint8_t           sessionId;
   uint16_t          chanSkip;
@@ -1457,7 +1456,7 @@ uint8_t ubCM_InitCmSession(uint8_t hostConnHandle, uint32_t accessAddress,
 
     // If this is the first connection we are monitoring or if the start time of the nextSessionId is in the future (the RF is not busy)
     // Otherwise, the RF is busy, the monitoring of the new connection will start once the current RF command completes.
-    if(ubCMConnInfo.numHandles == 0 || uble_timeCompare(ubCMConnInfo.ArrayOfConnInfo[nextSessionId-1].nextStartTime, currTime + processingTime))
+    if(ubCMConnInfo.numHandles == 0)
     {
       // Start monitoring the new connection
       // If i+1 > CM_MAX_SESSIONS then we know this function failed. Let cmStart()
@@ -1523,7 +1522,7 @@ uint8_t ubCM_updateExt(uint8_t sessionId, uint8_t hostConnHandle, uint32_t acces
 {
   uint8_t i;
 
-  i = sessionId-1; // index of session id is 1 less than acctual id
+  i = sessionId-1; // index of session id is 1 less than actual id
 
   if (ubCMConnInfo.ArrayOfConnInfo[i].connInterval != connInterval)
   {

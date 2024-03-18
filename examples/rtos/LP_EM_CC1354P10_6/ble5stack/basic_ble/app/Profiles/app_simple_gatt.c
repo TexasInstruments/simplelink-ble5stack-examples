@@ -9,7 +9,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,8 @@ Target Device: cc13xx_cc26xx
 #include <string.h>
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
 #include <ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Defines
@@ -93,9 +95,9 @@ static void SimpleGatt_changeCB( uint8_t paramId )
         SimpleGattProfile_getParameter( SIMPLEGATTPROFILE_CHAR1, &newValue );
 
         // Print the new value of char 1
-        Display_printf( dispHandle, dispIndex, 0,
-                        "#%5d    Data Simple Profile Callback: Char 1 = %d",
-                        dispIndex, newValue ); dispIndex++;
+        MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
+                          "Char 1 value = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                          newValue);
       }
       break;
 
@@ -104,9 +106,9 @@ static void SimpleGatt_changeCB( uint8_t paramId )
         SimpleGattProfile_getParameter(SIMPLEGATTPROFILE_CHAR3, &newValue);
 
         // Print the new value of char 3
-        Display_printf( dispHandle, dispIndex, 0,
-                        "#%5d    Data Simple Profile Callback: Char 3 = %d",
-                        dispIndex, newValue ); dispIndex++;
+        MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
+                          "Char 3 value = " MENU_MODULE_COLOR_YELLOW "%d " MENU_MODULE_COLOR_RESET,
+                          newValue);
 
         SimpleGatt_notifyChar4();
       }
@@ -114,9 +116,8 @@ static void SimpleGatt_changeCB( uint8_t paramId )
     case SIMPLEGATTPROFILE_CHAR4:
       {
           // Print Notification registration to user
-          Display_printf( dispHandle, dispIndex, 0,
-                          "#%5d    Data Simple Profile Callback: Char 4 = Notification registration",
-                          dispIndex ); dispIndex++;
+          MenuModule_printf(APP_MENU_PROFILE_STATUS_LINE, 0, "Profile status: Simple profile - "
+                                    "Char 4 = Notification registration");
 
           SimpleGatt_notifyChar4();
           break;

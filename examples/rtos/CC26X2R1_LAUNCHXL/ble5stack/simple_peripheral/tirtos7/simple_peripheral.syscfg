@@ -162,7 +162,8 @@ ble.advSet1.advData1.UUID016More = 65520;
 // Complete local name
 ble.advSet1.scanRes1.GAP_ADTYPE_LOCAL_NAME_COMPLETE = true;
 // Min and Max values of the connection interval - 2 octets Min, 2 octets Max (0xFFFF indicates no conn interval min or max)
-ble.advSet1.scanRes1.GAP_ADTYPE_SLAVE_CONN_INTERVAL_RANGE = true;
+const connIntervalRange = system.getScript("/ti/ble5stack/ble_common.js").getPeripheralConnIntervalRange();
+ble.advSet1.scanRes1[connIntervalRange] = true;
 // Min Connection Interval
 ble.advSet1.scanRes1.minConnInterval = 100;
 // Max Connection Interval
@@ -553,6 +554,7 @@ if (system.getRTOS() === "tirtos7")
     const Event = scripting.addModule("/ti/sysbios/knl/Event");
     const Mailbox = scripting.addModule("/ti/sysbios/knl/Mailbox");
     const Timestamp = scripting.addModule("/ti/sysbios/runtime/Timestamp");
+
     /* ================ GateMutexPri configuration ================ */
     var GateMutexPri = scripting.addModule("/ti/sysbios/gates/GateMutexPri");
 }

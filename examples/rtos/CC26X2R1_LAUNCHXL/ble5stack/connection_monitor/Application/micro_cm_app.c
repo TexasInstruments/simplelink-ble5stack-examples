@@ -40,24 +40,25 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <ti/sysbios/BIOS.h>
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/hal/Hwi.h>
-
 #include "bcomdef.h"
 #include <hal_assert.h>
 #include "micro_ble_cm.h"
 
 // DriverLib
-#include <driverlib/aon_batmon.h>
 #include "uble.h"
 #include "ugap.h"
-#include "urfc.h"
+#include "ull.h"
 
 // RTLS
 #include "rtls_ble.h"
+#include "rtls_ctrl.h"
 #include "rtls_ctrl_api.h"
 
+#ifdef USE_RCL
+#include <ti/drivers/rcl/RCL_Scheduler.h>
+#else
+#include <urfc.h>
+#endif
 /*********************************************************************
  * MACROS
  */
@@ -70,14 +71,14 @@
 #define UBT_TASK_PRIORITY                     3
 
 #ifndef UBT_TASK_STACK_SIZE
-#define UBT_TASK_STACK_SIZE                   800
+#define UBT_TASK_STACK_SIZE                   1024
 #endif
 
 // App Task configuration
 #define UCA_TASK_PRIORITY                     2
 
 #ifndef UCA_TASK_STACK_SIZE
-#define UCA_TASK_STACK_SIZE                   800
+#define UCA_TASK_STACK_SIZE                   1024
 #endif
 
 /*********************************************************************
@@ -87,6 +88,29 @@
 /*********************************************************************
  * GLOBAL VARIABLES
  */
+
+/** @data structure for the thread entity */
+typedef struct
+{
+    pthread_t  app_threadId;
+    mqd_t      app_queueHandle;
+    pthread_t  stack_threadId;
+    mqd_t      stack_queueHandle;
+    // Flag to indicate whether we are reporting to RTLS Control or not
+    uint8_t    rtlsSyncEnabled;
+    // CM is tracking
+    uint8_t    monitorTracking[CM_MAX_SESSIONS];
+} micro_cm_CtrlData_t;
+
+micro_cm_CtrlData_t gmicro_cm_CtrlData =
+{
+    .app_threadId           = NULL,
+    .app_queueHandle        = NULL,
+    .stack_threadId         = NULL,
+    .stack_queueHandle      = NULL,
+    .rtlsSyncEnabled        = RTLS_FALSE,
+    .monitorTracking        = {RTLS_FALSE},
+};
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -99,40 +123,15 @@
 /*********************************************************************
  * LOCAL VARIABLES
  */
-// Event globally used to post local events and pend on local events.
-Event_Handle syncAppEvent;
-
-// Event globally used to post local events and pend on local events.
-static Event_Handle syncStackEvent;
-
-Task_Struct ubtTask;
-uint8 ubtTaskStack[UBT_TASK_STACK_SIZE];
-
-Task_Struct ucaTask;
-uint8 ucaTaskStack[UCA_TASK_STACK_SIZE];
-
-// Queue object used for app messages
-static Queue_Struct stackMsg;
-static Queue_Handle stackMsgQueue;
-
-// Queue object used for app messages
-Queue_Struct appMsg;
-Queue_Handle appMsgQueue;
-
-// Flag to indicate whether we are reporting to RTLS Control or not
-uint8_t gRtlsSyncEnabled = RTLS_FALSE;
-
-// CM is tracking
-uint8_t gMonitorTracking[CM_MAX_SESSIONS] = {RTLS_FALSE};
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
 
-static void MicroCmApp_taskFxn(UArg a0, UArg a1);
+static void *MicroCmApp_taskFxn(void *arg);
 
 //ubStack High Priority Task
-static void ubStack_taskFxn(UArg a0, UArg a1);
+static void *ubStack_taskFxn(void *arg);
 
 static void uBLEStack_eventProxy(void);
 static bStatus_t MicroCmApp_enqueueStackMsg(uint16 event, uint8 data);
@@ -310,10 +309,7 @@ static void MicroCmApp_processCmMsg(uint8_t *pMsg)
  */
 static void MicroCmApp_enableRtlsSync(rtlsEnableSync_t *enable)
 {
-  if (enable->enable == RTLS_TRUE)
-  {
-    gRtlsSyncEnabled = RTLS_TRUE;
-  }
+    gmicro_cm_CtrlData.rtlsSyncEnabled = enable->enable;
 }
 
 /*********************************************************************
@@ -346,7 +342,7 @@ static void MicroCmApp_cmStartReq(uint8_t *pConnInfo)
       return;
     }
     ubCM_stop(sessionId);
-    gMonitorTracking[sessionId - 1] = RTLS_FALSE;
+    gmicro_cm_CtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
   }
 
   // Kick CM
@@ -378,7 +374,7 @@ static void MicroCmApp_terminateLinkReq(uint8_t sessionId)
 
   ubCM_stop(sessionId);
 
-  gMonitorTracking[sessionId - 1] = RTLS_FALSE;
+  gmicro_cm_CtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
 
   // Link terminated
   RTLSCtrl_connResultEvt(hostConnHandle, RTLS_LINK_TERMINATED);
@@ -423,7 +419,7 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
   // Convert CM Status to RTLS Status
   if (pCompleteEvt->status != CM_FAILED_NOT_ACTIVE)
   {
-    if (gMonitorTracking[pCompleteEvt->sessionId - 1] == RTLS_FALSE)
+    if (gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_FALSE)
     {
       hostConnHandle = MicroCmApp_getHostConnHandle(pCompleteEvt->sessionId);
       if (hostConnHandle == RTLS_CONNHANDLE_INVALID)
@@ -431,7 +427,7 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
         return;
       }
       RTLSCtrl_connResultEvt(hostConnHandle, RTLS_SUCCESS);
-      gMonitorTracking[pCompleteEvt->sessionId - 1] = RTLS_TRUE;
+      gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] = RTLS_TRUE;
     }
     status = RTLS_SUCCESS;
   }
@@ -449,16 +445,16 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
 
 
   if (ubCM_isSessionActive(pCompleteEvt->sessionId) == CM_SUCCESS &&
-      gMonitorTracking[pCompleteEvt->sessionId - 1] == RTLS_TRUE &&
-      gRtlsSyncEnabled && status != RTLS_FAIL)
+      gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_TRUE &&
+      gmicro_cm_CtrlData.rtlsSyncEnabled && status != RTLS_FAIL)
   {
     ubCM_ConnInfo_t connInfo = ubCMConnInfo.ArrayOfConnInfo[pCompleteEvt->sessionId - 1];
 
     // Get the next start time
     nextStartTime = connInfo.nextStartTime;
 
-    currentTime = RF_getCurrentTime();
-    nextEventTimeUs = RF_convertRatTicksToUs(nextStartTime - currentTime);
+    currentTime = ull_getCurrentTime();
+    nextEventTimeUs = ull_convertRatTicksToUs(nextStartTime - currentTime);
 
     // We are interested in the Responder RSSI and channel
     channel = pCompleteEvt->channel;
@@ -577,6 +573,7 @@ static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState)
 }
 
 
+
 /*********************************************************************
  *  @fn      MicroCmApp_init
  *
@@ -591,21 +588,23 @@ static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState)
  */
 void MicroCmApp_init(void)
 {
-  Task_Params ucaTaskParams;
-
   BLE_LOG_INT_TIME(0, BLE_LOG_MODULE_APP, "APP : ---- init ", UCA_TASK_PRIORITY);
-  // Create an RTOS event used to wake up this application to process events.
-  syncAppEvent = Event_create(NULL, NULL);
 
   // Create an RTOS queue for message from profile to be sent to app.
-  appMsgQueue = Util_constructQueue(&appMsg);
+  RTLSCtrl_createPQueue(&gmicro_cm_CtrlData.app_queueHandle,
+                        "MicroCmApp_CmAppQueue",
+                         UCA_QUEUE_SIZE,
+                         sizeof(microCmAppEvt_t),
+                         0 /* Blocking */);
 
-  // Configure App task
-  Task_Params_init(&ucaTaskParams);
-  ucaTaskParams.stack = ucaTaskStack;
-  ucaTaskParams.stackSize = UCA_TASK_STACK_SIZE;
-  ucaTaskParams.priority = UCA_TASK_PRIORITY;
-  Task_construct(&ucaTask, MicroCmApp_taskFxn, &ucaTaskParams, NULL);
+  char *ucaTaskStack;
+  ucaTaskStack = (char *) RTLSCtrl_malloc( UCA_TASK_STACK_SIZE );
+
+  RTLSCtrl_createPTask(&gmicro_cm_CtrlData.app_threadId,
+                        MicroCmApp_taskFxn,
+                        UCA_TASK_PRIORITY,
+                        ucaTaskStack,
+                        UCA_TASK_STACK_SIZE);
 }
 
 /*********************************************************************
@@ -619,29 +618,17 @@ void MicroCmApp_init(void)
  *
  * @return  none
  */
-static void MicroCmApp_taskFxn(UArg a0, UArg a1)
+static void *MicroCmApp_taskFxn(void *arg)
 {
+  microCmAppEvt_t appEvt;
+
   for(;;)
   {
-    volatile uint32 keyHwi;
-    uint32_t events = Event_pend(syncAppEvent, Event_Id_NONE, UCA_ALL_EVENTS, BIOS_WAIT_FOREVER);
-
     // If RTOS queue is not empty, process app message.
-    while (!Queue_empty(appMsgQueue))
+    if (mq_receive(gmicro_cm_CtrlData.app_queueHandle, (char*)&appEvt, sizeof(appEvt), NULL) == sizeof(appEvt))
     {
-      keyHwi = Hwi_disable();
-      microCmAppEvt_t *pMsg = (microCmAppEvt_t *)Util_dequeueMsg(appMsgQueue);
-      Hwi_restore(keyHwi);
-
-      if (pMsg)
-      {
-        // Process message.
-        MicroCmApp_processMicroCmAppMsg((uint8_t *)pMsg);
-
-        keyHwi = Hwi_disable();
-        free(pMsg);
-        Hwi_restore(keyHwi);
-      }
+      // Process message.
+      MicroCmApp_processMicroCmAppMsg((uint8_t *)&appEvt);
     }
   }
 }
@@ -690,26 +677,12 @@ void MicroCmApp_cmCb(uint8_t *pCmd)
  */
 void MicroCmApp_enqueueAppMsg(uint16_t eventId, uint8_t *pMsg)
 {
-  microCmAppEvt_t *qMsg;
-  volatile uint32 keyHwi;
+  microCmAppEvt_t AppEvt;
 
-  keyHwi = Hwi_disable();
-  if((qMsg = (microCmAppEvt_t *)malloc(sizeof(microCmAppEvt_t))))
-  {
-    qMsg->event = eventId;
-    qMsg->pData = pMsg;
+  AppEvt.event = eventId;
+  AppEvt.pData = pMsg;
 
-    Util_enqueueMsg(appMsgQueue, syncAppEvent, (uint8_t *)qMsg);
-  }
-  else
-  {
-    // Free pMsg if we failed to enqueue
-    if (pMsg)
-    {
-      free(pMsg);
-    }
-  }
-  Hwi_restore(keyHwi);
+  mq_send(gmicro_cm_CtrlData.app_queueHandle, (char*)&AppEvt, sizeof(AppEvt), 1);
 }
 
 /*********************************************************************
@@ -719,7 +692,7 @@ void MicroCmApp_enqueueAppMsg(uint16_t eventId, uint8_t *pMsg)
 /*********************************************************************
  * @fn      MicroCmApp_stack_init
  *
- * @brief   Initialize ubtTask.
+ * @brief   Initialize micro_cm_Stack threadId.
  *
  * @param   none
  *
@@ -727,14 +700,14 @@ void MicroCmApp_enqueueAppMsg(uint16_t eventId, uint8_t *pMsg)
  */
 void MicroCmApp_stack_init(void)
 {
-  Task_Params stackTaskParams;
+  char *ubtTaskStack;
+  ubtTaskStack = (char *) RTLSCtrl_malloc( UBT_TASK_STACK_SIZE );
 
-  // Configure Stack task
-  Task_Params_init(&stackTaskParams);
-  stackTaskParams.stack = ubtTaskStack;
-  stackTaskParams.stackSize = UBT_TASK_STACK_SIZE;
-  stackTaskParams.priority = UBT_TASK_PRIORITY;
-  Task_construct(&ubtTask, ubStack_taskFxn, &stackTaskParams, NULL);
+  RTLSCtrl_createPTask(&gmicro_cm_CtrlData.stack_threadId,
+                        ubStack_taskFxn,
+                        UBT_TASK_PRIORITY,
+                        ubtTaskStack,
+                        UBT_TASK_STACK_SIZE);
 }
 
 /*********************************************************************
@@ -746,57 +719,30 @@ void MicroCmApp_stack_init(void)
  *
  * @return  none
  */
-static void ubStack_taskFxn(UArg a0, UArg a1)
+static void *ubStack_taskFxn(void *arg)
 {
-  volatile uint32 keyHwi;
-
-  // Create an RTOS event used to wake up this application to process events.
-  syncStackEvent = Event_create(NULL, NULL);
-
-  if (syncStackEvent == NULL)
-  {
-    AssertHandler(RTLS_CTRL_ASSERT_CAUSE_NULL_POINTER_EXCEPT, 0);
-  }
-
   // Create an RTOS queue for message from profile to be sent to app.
-  stackMsgQueue = Util_constructQueue(&stackMsg);
+  RTLSCtrl_createPQueue(&gmicro_cm_CtrlData.stack_queueHandle,
+                        "MicroCmApp_CmStackQueue",
+                         UBT_QUEUE_SIZE,
+                         sizeof(ubtEvt_t),
+                         0 /* Blocking */);
 
   uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, uBLEStack_eventProxy,
                  RF_TIME_CRITICAL);
 
   ubCm_init(MicroCmApp_cmCb);
 
-  for (;;)
+  // If RTOS queue is not empty, process app message.
+  ubtEvt_t ubtEvt;
+  for(;;)
   {
-    // Waits for an event to be posted associated with the calling thread.
-    // Note that an event associated with a thread is posted when a
-    // message is queued to the message receive queue of the thread
-    Event_pend(syncStackEvent, Event_Id_NONE, UBT_QUEUE_EVT, BIOS_WAIT_FOREVER);
-
-    // If RTOS queue is not empty, process app message.
-    while (!Queue_empty(stackMsgQueue))
+    if (mq_receive(gmicro_cm_CtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), NULL) == sizeof(ubtEvt))
     {
-      ubtEvt_t *pMsg;
-
-      // malloc() is not thread safe. Must disable HWI.
-      keyHwi = Hwi_disable();
-      pMsg = (ubtEvt_t *) Util_dequeueMsg(stackMsgQueue);
-      Hwi_restore(keyHwi);
-
-      if (pMsg)
+      // Only expects UBT_EVT_MICROBLESTACK from ubStack.
+      if (ubtEvt.event == MICRO_CM_APP_USTACK_EVT)
       {
-        // Only expects UBT_EVT_MICROBLESTACK from ubStack.
-        if (pMsg->event == MICRO_CM_APP_USTACK_EVT)
-        {
-          uble_processMsg();
-        }
-
-        // free() is not thread safe. Must disable HWI.
-        keyHwi = Hwi_disable();
-
-        // Free the space from the message.
-        free(pMsg);
-        Hwi_restore(keyHwi);
+        uble_processMsg();
       }
     }
   }
@@ -805,16 +751,12 @@ static void ubStack_taskFxn(UArg a0, UArg a1)
 /*********************************************************************
  * @fn      uBLEStack_eventProxy
  *
- * @brief   Required event_post for ubStack operation.
+ * @brief   Required for ubStack operation.
  *
  */
 void uBLEStack_eventProxy(void)
 {
-  if (MicroCmApp_enqueueStackMsg(MICRO_CM_APP_USTACK_EVT, 0) == FALSE)
-  {
-    // post event anyway when heap is out to avoid malloc error
-    Event_post(syncStackEvent, UTIL_QUEUE_EVENT_ID);
-  }
+  MicroCmApp_enqueueStackMsg(MICRO_CM_APP_USTACK_EVT, 0);
 }
 
 /*********************************************************************
@@ -829,24 +771,15 @@ void uBLEStack_eventProxy(void)
  */
 static bStatus_t MicroCmApp_enqueueStackMsg(uint16 event, uint8 data)
 {
-  volatile uint32 keyHwi;
-  ubtEvt_t *pMsg;
+  ubtEvt_t ubtEvt;
   uint8_t status = FALSE;
 
-  // malloc() is not thread safe. Must disable HWI.
-  keyHwi = Hwi_disable();
+  ubtEvt.event = event;
+  ubtEvt.data = data;
 
-  // Create dynamic pointer to message.
-  pMsg = (ubtEvt_t*) malloc(sizeof(ubtEvt_t));
-  if (pMsg != NULL)
-  {
-    pMsg->event = event;
-    pMsg->data = data;
+  // Enqueue the message.
+  status = mq_send(gmicro_cm_CtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), 1);
 
-    // Enqueue the message.
-    status = Util_enqueueMsg(stackMsgQueue, syncStackEvent, (uint8*) pMsg);
-  }
-  Hwi_restore(keyHwi);
   return status;
 }
 

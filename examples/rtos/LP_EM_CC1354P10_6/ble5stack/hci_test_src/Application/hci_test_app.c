@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -321,7 +321,7 @@ static void HCI_TestApp_init(void)
   VOID Util_buildRevision(&buildRev);
 #endif /* ICALL_LITE */
 
-  // set this device's Sleep Clock Accuracy, if a Slave
+  // set this device's Sleep Clock Accuracy, if a Peripheral
   if (buildRev.ctrlInfo & ADV_CONN_CFG)
   {
     //HCI_EXT_SetSCACmd(DEVICE_SCA);
@@ -474,7 +474,7 @@ void HCI_TestApp_processStackMsg(hciPacket_t *pBuf)
  */
 static void HCI_TestApp_sendToNPI(uint8_t *buf, uint16_t len)
 {
-  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsg(sizeof(npiPkt_t) + len);
+  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsgLimited(sizeof(npiPkt_t) + len);
 
   if (pNpiPkt)
   {
@@ -607,8 +607,8 @@ static uint8 HCI_TestApp_processEvent(uint8 *pMsg)
         myMsg->pData[8] &= LL_DEV_ADDR_TYPE_MASK;  // apply the address type mask
         myMsg->pData[15] = myMsg->pData[27];       // LO connInterval
         myMsg->pData[16] = myMsg->pData[28];       // HI connInterval
-        myMsg->pData[17] = myMsg->pData[29];       // LO slaveLatency
-        myMsg->pData[18] = myMsg->pData[30];       // HI slaveLatency
+        myMsg->pData[17] = myMsg->pData[29];       // LO peripheralLatency
+        myMsg->pData[18] = myMsg->pData[30];       // HI peripheralLatency
         myMsg->pData[19] = myMsg->pData[31];       // LO connTimeout
         myMsg->pData[20] = myMsg->pData[32];       // HI connTimeout
         myMsg->pData[21] = myMsg->pData[33];       // clockAccuracy
@@ -676,13 +676,13 @@ void hciDisplayLCD(void)
     return;
   }
 
-  // check for Inititator (i.e. Master)
+  // check for Inititator (i.e. Central)
   if (buildRev.ctrlInfo & INIT_CFG)
   {
     Display_print0(dispHandle, i++, 0, "INIT     (Central)");
   }
 
-  // check for Connectable Advertising (i.e. Slave)
+  // check for Connectable Advertising (i.e. Peripheral)
   if (buildRev.ctrlInfo & ADV_CONN_CFG)
   {
     Display_print0(dispHandle, i++, 0, "ADV_CONN (Peripheral)");
@@ -755,12 +755,8 @@ void HCI_TestApp_handleNPIRxInterceptEvent(uint8_t *pMsg)
 {
   HCI_TL_SendToStack(((NPIMSG_msg_t *)pMsg)->pBuf);
 
-  // NPI buffer needs to be free once it has been consumed outside of the NPI task
-  ICall_freeMsg(((NPIMSG_msg_t *)pMsg)->pBuf);
-
-  // Need to free also the container...it was free before by the stack,
-  // but not anymore since TL has been moved on teh app side.
-  ICall_free(pMsg);
+  // Free the NPI message
+  NPITask_freeNpiMsg(pMsg);
 }
 
 /*********************************************************************
@@ -835,7 +831,7 @@ static uint8_t HCI_TestApp_Queue_ProcessCbkEvent(void)
  */
 static void HciTestApp_sendToNPI(uint8_t *buf, uint16_t len)
 {
-  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsg(sizeof(npiPkt_t) + len);
+  npiPkt_t *pNpiPkt = (npiPkt_t *)ICall_allocMsgLimited(sizeof(npiPkt_t) + len);
 
   if (pNpiPkt)
   {

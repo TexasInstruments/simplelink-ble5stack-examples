@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -149,6 +149,7 @@ void osalInitTasks( void )
 
   uint8_t cfg_GATTServApp_att_delayed_req = 0;
   uint8_t cfg_gapBond_gatt_no_service_changed = 0;
+  uint8_t cfg_gatt_max_num_prepare_writes = 0;
 #if defined ( GAP_BOND_MGR )
   uint8_t cfg_gapBond_gatt_no_client = 0;
 #endif
@@ -161,6 +162,9 @@ void osalInitTasks( void )
 #endif
 #if defined ( GATT_NO_CLIENT )
   cfg_gapBond_gatt_no_client = 1;
+#endif
+#if defined ( GATT_MAX_PREPARE_WRITES )
+  cfg_gatt_max_num_prepare_writes = GATT_MAX_PREPARE_WRITES;
 #endif
 
   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
@@ -191,7 +195,7 @@ void osalInitTasks( void )
   GATT_Init( taskID++ );
 
   /* GATT Server App Task */
-  GATTServApp_Init( taskID++, cfg_GATTServApp_att_delayed_req, cfg_gapBond_gatt_no_service_changed );
+  GATTServApp_Init( taskID++, cfg_GATTServApp_att_delayed_req, cfg_gapBond_gatt_no_service_changed, cfg_gatt_max_num_prepare_writes );
 
 #if defined ( GAP_BOND_MGR )
   /* Bond Manager Task */

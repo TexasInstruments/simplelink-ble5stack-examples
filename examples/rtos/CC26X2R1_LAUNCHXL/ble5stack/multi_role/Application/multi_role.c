@@ -10,7 +10,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -1122,7 +1122,7 @@ static void multi_role_processGapMsg(gapEventHdr_t *pMsg)
       rsp.connectionHandle = pReq->req.connectionHandle;
       rsp.signalIdentifier = pReq->req.signalIdentifier;
 
-      // Only accept connection intervals with slave latency of 0
+      // Only accept connection intervals with peripheral latency of 0
       // This is just an example of how the application can send a response
       if(pReq->req.connLatency == 0)
       {
@@ -1435,7 +1435,7 @@ static void multi_role_processParamUpdate(uint16_t connHandle)
 
   req.connectionHandle = connHandle;
 #ifdef DEFAULT_SEND_PARAM_UPDATE_REQ
-  req.connLatency = DEFAULT_DESIRED_SLAVE_LATENCY;
+  req.connLatency = DEFAULT_DESIRED_PERIPHERAL_LATENCY;
   req.connTimeout = DEFAULT_DESIRED_CONN_TIMEOUT;
   req.intervalMin = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
   req.intervalMax = DEFAULT_DESIRED_MAX_CONN_INTERVAL;
@@ -2795,6 +2795,7 @@ bool multi_role_doConnect(uint8_t index)
 bool multi_role_doSelectConn(uint8_t index)
 {
   uint32_t itemsToDisable = MR_ITEM_NONE;
+  uint32_t itemsToEnable = MR_ITEM_NONE;
 
   // index cannot be equal to or greater than MAX_NUM_BLE_CONNS
   MULTIROLE_ASSERT(index < MAX_NUM_BLE_CONNS);
@@ -2809,11 +2810,16 @@ bool multi_role_doSelectConn(uint8_t index)
     // Diable GATT Read/Write until simple service is found
     itemsToDisable = MR_ITEM_GATTREAD | MR_ITEM_GATTWRITE;
   }
+  else
+  {
+    // Enable GATT Read/Write
+    itemsToEnable = MR_ITEM_GATTREAD | MR_ITEM_GATTWRITE;
+  }
 
   // Set the menu title and go to this connection's context
   TBM_SET_TITLE(&mrMenuPerConn, TBM_GET_ACTION_DESC(&mrMenuSelectConn, index));
 
-  tbm_setItemStatus(&mrMenuPerConn, MR_ITEM_NONE, itemsToDisable);
+  tbm_setItemStatus(&mrMenuPerConn, itemsToEnable, itemsToDisable);
 
   // Clear non-connection-related message
   Display_clearLine(dispHandle, MR_ROW_NON_CONN);
@@ -2906,7 +2912,7 @@ bool multi_role_doConnUpdate(uint8_t index)
   params.connectionHandle = mrConnHandle;
   params.intervalMin = DEFAULT_UPDATE_MIN_CONN_INTERVAL;
   params.intervalMax = DEFAULT_UPDATE_MAX_CONN_INTERVAL;
-  params.connLatency = DEFAULT_UPDATE_SLAVE_LATENCY;
+  params.connLatency = DEFAULT_UPDATE_PERIPHERAL_LATENCY;
 
   linkDBInfo_t linkInfo;
   if (linkDB_GetInfo(mrConnHandle, &linkInfo) == SUCCESS)

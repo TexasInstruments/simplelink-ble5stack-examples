@@ -38,6 +38,8 @@
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/nv</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/cc26xx</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/icall/src</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer</path>
+        <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/profiles/oad/cc26xx</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/menu</path>
         <path>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/oad_efl_dbg</path>
@@ -57,7 +59,6 @@
     <defines>
         <define>SECURITY</define>
         <define>OAD_ONCHIP</define>
-        <define>DeviceFamily_CC26X2X7</define>
         <define>FLASH_ROM_BUILD</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>HEAPMGR_CONFIG=0x80</define>
@@ -66,8 +67,7 @@
 
     <extraOptions>
         <args>
-            <arg>-f$PROJ_DIR$/ti_ble_app_config.opt</arg>
-            <arg>-f$PROJ_DIR$/ti_build_config.opt</arg>
+            <arg>-f$PROJ_DIR$/ti_utils_build_compiler.opt</arg>
             <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/build_components.opt</arg>
             <arg>-f$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/config/factory_config.opt</arg>
             <arg>--diag_suppress=Pa205</arg>
@@ -97,7 +97,6 @@
             <arg>--config_def FLASH_ROM_BUILD=2</arg>
             <arg>-L$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/kernel/tirtos7/packages</arg>
             <arg>-f$PROJ_DIR$/ti_utils_build_linker.cmd.genlibs</arg>
-            <arg>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/devices/cc13x2x7_cc26x2x7/driverlib/bin/iar/driverlib.lib</arg>
             <arg>--silent</arg>
         </args>
     </linkerExtraOptions>
@@ -146,8 +145,10 @@
             <path copyTo="$PROJ_DIR$/Application/simple_peripheral_oad_onchip_menu.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/examples/rtos/LP_CC2652R7/ble5stack/simple_peripheral_oad_onchip/Application/simple_peripheral_oad_onchip_menu.h</path>
             <path reference="$PROJ_DIR$/Application/two_btn_menu.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/menu/two_btn_menu.c</path>
             <path reference="$PROJ_DIR$/Application/two_btn_menu.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/menu/two_btn_menu.h</path>
-            <path reference="$PROJ_DIR$/Application/util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.c</path>
-            <path reference="$PROJ_DIR$/Application/util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.h</path>
+        </group>
+        <group name="common/Util" build="true">
+            <path reference="$PROJ_DIR$/common/Util/util.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.c</path>
+            <path reference="$PROJ_DIR$/common/Util/util.h">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/ble5stack/common/cc26xx/util.h</path>
         </group>
         <group name="Drivers/ECC" build="true">
             <path reference="$PROJ_DIR$/Drivers/ECC/ECCROMCC26XX.c">$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$/source/ti/common/cc26xx/ecc/ECCROMCC26XX.c</path>

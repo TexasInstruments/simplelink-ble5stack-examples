@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2017-2023, Texas Instruments Incorporated
+ Copyright (c) 2017-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -114,8 +114,8 @@ uint8_t ownAddr[B_ADDR_LEN] = { 0x0D, 0x35, 0x1E, 0xB0, 0x6F, 0x80 };
 // Maximum connection interval (units of 1.25ms, 104=130ms) for  parameter update request
 #define DEFAULT_DESIRED_MAX_CONN_INTERVAL     104
 
-// Slave latency to use for parameter update request
-#define DEFAULT_DESIRED_SLAVE_LATENCY         0
+// Peripheral latency to use for parameter update request
+#define DEFAULT_DESIRED_PERIPHERAL_LATENCY         0
 
 // Supervision timeout value (units of 10ms, 300=3s) for parameter update request
 #define DEFAULT_DESIRED_CONN_TIMEOUT          300
@@ -327,8 +327,6 @@ static uint8_t advertData[] =
   LO_UINT16(OAD_SERVICE_UUID),
   HI_UINT16(OAD_SERVICE_UUID),
 };
-
-
 
 // GAP - SCAN RSP data (max size = 31 bytes)
 static uint8_t scanRspData[] =
@@ -732,7 +730,7 @@ static void OadPersistApp_taskFxn(UArg a0, UArg a1)
           {
 #ifdef MCUBOOT_ENABLE
             struct image_version versionZero = {0};
-            #if defined(DeviceFamily_CC13X4) || defined(DeviceFamily_CC26X4) || defined(DeviceFamily_CC23X0)
+            #if defined(DeviceFamily_CC13X4) || defined(DeviceFamily_CC26X4) || defined(DeviceFamily_CC23X0R5)
               FlashProgram((uint8_t *) &versionZero, (uint32_t) &primary_mcubootHdr.ih_ver, sizeof(primary_mcubootHdr.ih_ver));
             #else
               static struct image_header * mcubootHdr = (struct image_header *)0x00;
@@ -789,14 +787,16 @@ static uint8_t OadPersistApp_processStackMsg(ICall_Hdr *pMsg)
   switch (pMsg->event)
   {
     case GAP_MSG_EVENT:
+    {
       OadPersistApp_processGapMessage((gapEventHdr_t*) pMsg);
       break;
-
+    }
     case GATT_MSG_EVENT:
+    {
       // Process GATT message
       safeToDealloc = OadPersistApp_processGATTMsg((gattMsgEvent_t *)pMsg);
       break;
-
+    }
     case HCI_GAP_EVENT_EVENT:
     {
       // Process HCI message
@@ -810,9 +810,10 @@ static uint8_t OadPersistApp_processStackMsg(ICall_Hdr *pMsg)
         }
 
         case HCI_BLE_HARDWARE_ERROR_EVENT_CODE:
+        {
           AssertHandler(HAL_ASSERT_CAUSE_HARDWARE_ERROR,0);
           break;
-
+        }
         // HCI Commands Events
         case HCI_COMMAND_STATUS_EVENT_CODE:
         {
@@ -853,10 +854,11 @@ static uint8_t OadPersistApp_processStackMsg(ICall_Hdr *pMsg)
     }
 
     case L2CAP_SIGNAL_EVENT:
+    {
       // Process L2CAP signal
       safeToDealloc = OadPersistApp_processL2CAPMsg((l2capSignalEvent_t *)pMsg);
       break;
-
+    }
     default:
       // do nothing
       break;
@@ -956,21 +958,25 @@ static void OadPersistApp_processAppMsg(spEvt_t *pMsg)
   switch (pMsg->event)
   {
     case SP_ADV_EVT:
+    {
       OadPersistApp_processAdvEvent((spGapAdvEventData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_PAIR_STATE_EVT:
+    {
       OadPersistApp_processPairState((spPairStateData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_PASSCODE_EVT:
+    {
       OadPersistApp_processPasscode((spPasscodeData_t*)(pMsg->pData));
       break;
-
+    }
     case SP_READ_RPA_EVT:
+    {
       //OadPersistApp_updateRPA();
       break;
-
+    }
     case SP_SEND_PARAM_UPDATE_EVT:
     {
       // Extract connection handle from data
@@ -984,8 +990,10 @@ static void OadPersistApp_processAppMsg(spEvt_t *pMsg)
     }
 
     case SP_CONN_EVT:
+    {
       OadPersistApp_processConnEvt((Gap_ConnEventRpt_t *)(pMsg->pData));
       break;
+    }
 
     default:
       // Do nothing.
@@ -1567,7 +1575,7 @@ static void OadPersistApp_processParamUpdate(uint16_t connHandle)
   uint8_t connIndex;
 
   req.connectionHandle = connHandle;
-  req.connLatency = DEFAULT_DESIRED_SLAVE_LATENCY;
+  req.connLatency = DEFAULT_DESIRED_PERIPHERAL_LATENCY;
   req.connTimeout = DEFAULT_DESIRED_CONN_TIMEOUT;
   req.intervalMin = DEFAULT_DESIRED_MIN_CONN_INTERVAL;
   req.intervalMax = DEFAULT_DESIRED_MAX_CONN_INTERVAL;

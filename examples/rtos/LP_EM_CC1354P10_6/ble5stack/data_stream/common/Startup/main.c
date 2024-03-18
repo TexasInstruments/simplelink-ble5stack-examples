@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -115,7 +115,11 @@ bleUserCfg_t user0Cfg = BLE_USER_CFG;
  * EXTERNS
  */
 extern assertCback_t halAssertCback;
+#if !defined(Display_DISABLE_ALL)
 extern Display_Handle dispHandle;
+#else // defined(Display_DISABLE_ALL)
+Display_Handle dispHandle = NULL;
+#endif // !defined(Display_DISABLE_ALL)
 extern void appMain(void);
 extern void AssertHandler(uint8 assertCause, uint8 assertSubcause);
 

@@ -22,14 +22,11 @@
         compilerBuildOptions="
             -I${PROJECT_ROOT}
             -I${PROJECT_ROOT}/${ConfigName}
-            @${PROJECT_LOC}/${ConfigName}/syscfg/ti_ble_app_config.opt
-            @${PROJECT_LOC}/${ConfigName}/syscfg/ti_build_config.opt
             @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/config/build_components.opt
             @${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/config/factory_config.opt
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/drivers/dpl
+            -I${PROJECT_LOC}/app
             -DICALL_NO_APP_EVENTS
-            -DUARTLOG_ENABLE
-            -Duartlog_FILE=0
             -std=gnu9x
             -g
             -Oz
@@ -55,7 +52,8 @@
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/common/nv
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/common/cc26xx
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/ble5stack/icall/src
-            -DDeviceFamily_CC26X2
+            -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/health_thermometer
+            -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/services/health_thermometer
             -DFLASH_ROM_BUILD
             -DNVOCMP_NWSAMEITEM=1
             -I${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/devices/cc13x2_cc26x2
@@ -71,24 +69,22 @@
             -mfpu=fpv4-sp-d16
         "
         linkerBuildOptions="
-            --diag_wrap=off
-            --display_error_number
-            -x
+            -Wl,--diag_wrap=off
+            -Wl,--display_error_number
+            -Wl,-x
             -L${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source
             -L${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/kernel/tirtos7/packages
-            --define=FLASH_ROM_BUILD=2
+            -Wl,--define=FLASH_ROM_BUILD=2
             -L${PROJECT_BUILD_DIR}/syscfg
             -lti_utils_build_linker.cmd.genlibs
-            -lti/devices/cc13x2_cc26x2/driverlib/bin/ticlang/driverlib.lib
             -Wl,--rom_model
             -Wl,--warn_sections
             -L${CG_TOOL_ROOT}/lib
             -llibc.a
         "
         postBuildStep="
-            ${CG_TOOL_HEX} -order MS --memwidth=8 --romwidth=8 --intel -o ${ProjName}.hex ${ProjName}.out
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileName} ${BuildArtifactFileBaseName}.hex
         "
-        enableSysConfigTool="true"
         sysConfigBuildOptions="
             --product ${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/.metadata/product.json
             --compiler ticlang
@@ -101,6 +97,10 @@
         </file>
         <file path="../../app/app_main.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
+        <file path="../../app/app_main.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_menu.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
         <file path="../../app/app_broadcaster.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
         <file path="../../app/app_peripheral.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
@@ -108,6 +108,8 @@
         <file path="../../app/app_observer.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
         <file path="../../app/app_central.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_connection.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
         <file path="../../app/app_pairing.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
@@ -126,6 +128,10 @@
         <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/ble_app_util/src/bleapputil_process.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
         </file>
         <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/ble_app_util/src/bleapputil_stack_callbacks.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
         </file>
         <file path="${COM_TI_SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/simple_gatt/simple_gatt_profile.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/simple_gatt">
         </file>

@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2018-2023, Texas Instruments Incorporated
+ Copyright (c) 2018-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,22 @@ extern "C"
 #include "osal.h"
 #endif
 
+#include <mqueue.h>
+#include <pthread.h>
+
+#ifdef USE_RCL
+#include <drivers/dpl/HwiP.h>
+#define Hwi_disable()  HwiP_disable()
+#define Hwi_restore(a) HwiP_restore(a)
+#include <drivers/dpl/SwiP.h>
+#define Swi_disable()  SwiP_disable()
+#define Swi_restore(a) SwiP_restore(a)
+#include <drivers/dpl/TaskP.h>
+#else
+#include <ti/sysbios/hal/Hwi.h>
+#include <ti/sysbios/knl/Swi.h>
+#endif
+
 /*********************************************************************
 *  EXTERNAL VARIABLES
 */
@@ -86,12 +102,12 @@ extern "C"
 
 // RTLS Task configuration
 #define RTLS_CTRL_TASK_PRIORITY   2       //!< RTLS Task configuration variable
-#define RTLS_CTRL_TASK_STACK_SIZE 752     //!< RTLS Task configuration variable
+#define RTLS_CTRL_TASK_STACK_SIZE 1024     //!< RTLS Task configuration variable
 
 #define RTLS_QUEUE_EVT            UTIL_QUEUE_EVENT_ID   //!< Event_Id_30
 
 #define RTLS_CTRL_ALL_EVENTS      (RTLS_QUEUE_EVT)      //!< RTLS Task configuration
-
+#define RTLS_QUEUE_SIZE           16
 
 #define RTLS_CMD_IDENTIFY                  0x00          //!< RTLS Node Manager command
 #define RTLS_CMD_RESERVED                  0x01          //!< RTLS Node Manager command
@@ -215,6 +231,34 @@ typedef struct
 * @return  none
 */
 void* RTLSCtrl_malloc(uint32_t sz);
+
+// -----------------------------------------------------------------------------
+//! \brief      Create a POSIX task.
+//              In case the stackaddr is not provided, allocate it on the heap.
+//!
+//! \param    newthread     threadId
+//! \param    startroutine  Pointer to the task entry function
+//! \param    priority
+//! \param    stackaddr
+//! \param    stacksize
+//!
+//! \return   void
+// -----------------------------------------------------------------------------
+int RTLSCtrl_createPTask(pthread_t *newthread, void *(*startroutine)(void *), int priority, void *stackaddr, size_t stacksize);
+
+// -----------------------------------------------------------------------------
+//! \brief      Create a POSIX queue.
+//!
+//! \param    queueHandle     queue handle
+//! \param    mq_name         name
+//! \param    mq_size         number of elements for the queue
+//! \param    mq_msgsize      size of queue element
+//! \param    mq_flags        flags
+//!
+//! \return   void
+// -----------------------------------------------------------------------------
+int RTLSCtrl_createPQueue(mqd_t *queueHandle, char *mq_name, uint32_t mq_size, uint32_t mq_msgsize, uint32_t mq_flags);
+
 
 /*********************************************************************
 *********************************************************************/

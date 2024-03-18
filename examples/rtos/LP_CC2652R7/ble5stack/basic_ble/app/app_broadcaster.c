@@ -26,7 +26,7 @@ Target Device: cc13xx_cc26xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,8 @@ Target Device: cc13xx_cc26xx
 //*****************************************************************************
 #include "ti_ble_config.h"
 #include <ti/bleapp/ble_app_util/inc/bleapputil_api.h>
+#include <ti/bleapp/menu_module/menu_module.h>
+#include <app_main.h>
 
 //*****************************************************************************
 //! Prototypes
@@ -129,25 +131,21 @@ const BLEAppUtil_AdvStart_t broadcasterStartAdvSet1 =
  */
 void Broadcaster_AdvEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
 {
-    BLEAppUtil_AdvEventData_t *advData = (BLEAppUtil_AdvEventData_t *)pMsgData;
-
     switch(event)
     {
         case BLEAPPUTIL_ADV_START_AFTER_ENABLE:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    ADV_START_AFTER_ENABLE: Broadcaster role, handle: %d",
-                           dispIndex,
-                           advData->pBuf->advHandle); dispIndex++;
+            MenuModule_printf(APP_MENU_ADV_EVENT, 0, "Adv status: Started - handle: "
+                              MENU_MODULE_COLOR_YELLOW "%d" MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle);
             break;
         }
 
         case BLEAPPUTIL_ADV_END_AFTER_DISABLE:
         {
-            Display_printf(dispHandle, dispIndex, 0,
-                           "#%5d    ADV_START_AFTER_DISABLE: Broadcaster role, handle: %d",
-                           dispIndex,
-                           advData->pBuf->advHandle); dispIndex++;
+            MenuModule_printf(APP_MENU_ADV_EVENT, 0, "Adv status: Ended - handle: "
+                              MENU_MODULE_COLOR_YELLOW "%d" MENU_MODULE_COLOR_RESET,
+                              ((BLEAppUtil_AdvEventData_t *)pMsgData)->pBuf->advHandle);
             break;
         }
 
@@ -170,39 +168,31 @@ void Broadcaster_AdvEventHandler(uint32 event, BLEAppUtil_msgHdr_t *pMsgData)
  */
 bStatus_t Broadcaster_start()
 {
-    bStatus_t status;
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Broadcaster_start: Register Handlers",
-                   dispIndex); dispIndex++;
+    bStatus_t status = SUCCESS;
 
     status = BLEAppUtil_registerEventHandler(&broadcasterAdvHandler);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Broadcaster_start: Init Adv Set 1",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_initAdvSet(&broadcasterAdvHandle_1, &broadcasterInitAdvSet1);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
-
-    Display_printf(dispHandle, dispIndex, 0,
-                   "#%5d    Broadcaster_start: Start Adv Set 1",
-                   dispIndex); dispIndex++;
 
     status = BLEAppUtil_advStart(broadcasterAdvHandle_1, &broadcasterStartAdvSet1);
     if(status != SUCCESS)
     {
+        // Return status value
         return(status);
     }
 
-    return SUCCESS;
+    // Return status value
+    return(status);
 }
 
 #endif // ( HOST_CONFIG & ( BROADCASTER_CFG ) )
