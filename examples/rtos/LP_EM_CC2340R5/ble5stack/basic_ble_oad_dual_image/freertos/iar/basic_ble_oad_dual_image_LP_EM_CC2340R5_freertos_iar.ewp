@@ -656,7 +656,7 @@
                             <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
                             <buildSequence>postLink</buildSequence>
                         </buildAction>
-                </buildActions>
+            </buildActions>
             </data>
         </settings>
         <settings>
@@ -1638,7 +1638,7 @@
                             <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
                             <buildSequence>postLink</buildSequence>
                         </buildAction>
-                </buildActions>
+            </buildActions>
             </data>
         </settings>
         <settings>

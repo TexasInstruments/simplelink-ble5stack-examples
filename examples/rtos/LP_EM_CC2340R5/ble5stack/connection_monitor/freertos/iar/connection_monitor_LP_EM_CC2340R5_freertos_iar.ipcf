@@ -57,6 +57,7 @@
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
         <define>USE_RCL</define>
+        <define>NVOCMP_NVPAGES=6</define>
         <define>FREERTOS</define>
         <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
@@ -79,7 +80,7 @@
 
     <linkerFile>
         <override>true</override>
-        <path>$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf</path>
+        <path>$PROJ_DIR$/lpf3_app_and_stack_freertos.icf</path>
     </linkerFile>
 
     <linkerExtraOptions>
@@ -122,7 +123,7 @@
 
     <files>
         <path reference="$PROJ_DIR$/build_config.opt">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/Examples_source/connection_monitor/build_config.opt</path>
-        <path copyTo="$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/connection_monitor/freertos/iar/cc23x0_app_and_stack_freertos.icf</path>
+        <path copyTo="$PROJ_DIR$/lpf3_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/connection_monitor/freertos/iar/lpf3_app_and_stack_freertos.icf</path>
         <path copyTo="$PROJ_DIR$/main_freertos.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/connection_monitor/Startup/main_freertos.c</path>
         <path copyTo="$PROJ_DIR$/micro_cm_app.syscfg">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/connection_monitor/freertos/micro_cm_app.syscfg</path>
         <path reference="$PROJ_DIR$/README.md">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/Examples_source/connection_monitor/README.md</path>

@@ -60,6 +60,7 @@ CFLAGS += -I../.. \
     -DNVOCMP_NWSAMEITEM=1 \
     -DFLASH_ONLY_BUILD \
     -DUSE_RCL \
+    -DNVOCMP_NVPAGES=6 \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/drivers/rcl" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/posix/ticlang" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/third_party/freertos/include" \
@@ -79,7 +80,7 @@ LFLAGS += -Wl,--diag_wrap=off \
     -Wl,-c \
     "-L$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source" \
     ti_utils_build_linker.cmd.genlibs \
-    ../../freertos/ticlang/cc23x0_app_freertos.cmd \
+    ../../freertos/ticlang/lpf3_app_freertos.cmd \
     "-Wl,-m,$(NAME).map" \
     -Wl,--rom_model \
     -Wl,--warn_sections \

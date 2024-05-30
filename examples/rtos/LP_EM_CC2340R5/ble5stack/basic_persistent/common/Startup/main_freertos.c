@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,6 @@
     #include <DLib_Threads.h>
 #endif
 #include <ti/drivers/Power.h>
-#include <ti/drivers/power/PowerCC23X0.h>
 #include <ti/display/Display.h>
 #include <ti/drivers/UART2.h>
 #include <ti/common/cc26xx/uartlog/UartLog.h>

@@ -16,7 +16,6 @@
     <includePath>
         <path>$PROJ_DIR$</path>
         <path>$PROJ_DIR$/Application</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/Examples_source/basic_ble_project/dpl</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/common/cc26xx/npi/stack</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti</path>
@@ -54,6 +53,7 @@
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
         <define>USE_RCL</define>
+        <define>NVOCMP_NVPAGES=6</define>
         <define>FREERTOS</define>
         <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
@@ -76,13 +76,13 @@
 
     <linkerFile>
         <override>true</override>
-        <path>$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf</path>
+        <path>$PROJ_DIR$/lpf3_app_and_stack_freertos.icf</path>
     </linkerFile>
 
     <linkerExtraOptions>
         <args>
             <arg>--keep __vector_table</arg>
-            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/lib_projects/CC2340R5/OneLib/lib/iar/m0p/OneLib.a</arg>
+            <arg>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/lib_projects/cc2340r5/OneLib/lib/iar/m0p/OneLib.a</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source</arg>
             <arg>-L$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/kernel</arg>
             <arg>--config_def PAGE_ALIGN=-1</arg>
@@ -119,8 +119,8 @@
 
 
     <files>
-        <path copyTo="$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/freertos/iar/cc23x0_app_and_stack_freertos.icf</path>
         <path copyTo="$PROJ_DIR$/host_test.syscfg">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/freertos/host_test.syscfg</path>
+        <path copyTo="$PROJ_DIR$/lpf3_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/freertos/iar/lpf3_app_and_stack_freertos.icf</path>
         <path copyTo="$PROJ_DIR$/main_freertos.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/Startup/main_freertos.c</path>
         <path copyTo="$PROJ_DIR$/README.html">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/host_test/README.html</path>
         <group name="Application" build="true">

@@ -24,7 +24,6 @@
             -I${PROJECT_ROOT}/${ConfigName}
             -I${PROJECT_LOC}/app
             -DICALL_NO_APP_EVENTS
-            -mcpu=cortex-m4
             -mthumb
             -mlittle-endian
             -std=gnu99
@@ -62,6 +61,7 @@
             -DNVOCMP_NWSAMEITEM=1
             -DFLASH_ONLY_BUILD
             -DUSE_RCL
+            -DNVOCMP_NVPAGES=6
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/include
@@ -90,7 +90,6 @@
         postBuildStep="
             ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileName} ${BuildArtifactFileBaseName}.hex
         "
-        enableSysConfigTool="true"
         sysConfigBuildOptions="
             --product ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/.metadata/product.json
             --compiler ticlang
@@ -189,13 +188,19 @@
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/menu_module/menu_module.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
         </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/health_toolkit/inc/debugInfo.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/HealthToolkit/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/health_toolkit/inc/debugInfo_errno.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/HealthToolkit/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/health_toolkit/src/debugInfo.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/HealthToolkit">
+        </file>
         <file path="../../freertos/data_stream.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src/icall_POSIX.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
         </file>
         <file path="../../common/Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../freertos/ticlang/cc23x0_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../freertos/ticlang/lpf3_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
     </project>
 </projectSpec>

@@ -25,7 +25,7 @@ Target Device: cc23xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,7 @@ BLEAppUtil_EventHandler_t centralScanHandler =
 
 BLEAppUtil_ConnectParams_t centralConnParams =
 {
-    .phys = INIT_PHY_1M,
+    .phys = DEFAULT_INIT_PHY,
     .timeout = 0
 };
 
@@ -119,7 +119,7 @@ const BLEAppUtil_ScanInit_t centralScanInitParams =
     .advReportFields            = ADV_RPT_FIELDS,
 
     /*! Opt SCAN_PRIM_PHY_1M | SCAN_PRIM_PHY_CODED */
-    .scanPhys                   = DEFAULT_SCAN_PHY,
+    .scanPhys                   = DEFAULT_INIT_PHY,
 
     /*! Opt SCAN_FLT_POLICY_ALL | SCAN_FLT_POLICY_AL |   */
     /*! SCAN_FLT_POLICY_ALL_RPA | SCAN_FLT_POLICY_AL_RPA */

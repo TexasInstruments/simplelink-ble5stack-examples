@@ -35,6 +35,8 @@
  *  host_test.syscfg
  */
 
+const lpName = system.getScript("/ti/ble5stack/ble_common.js").getBoardOrLaunchPadName(true);
+
 /* ======== AESCCM ======== */
 var AESCCM = scripting.addModule("/ti/drivers/AESCCM");
 var aesccm = AESCCM.addInstance();
@@ -81,7 +83,16 @@ const RCL = scripting.addModule("/ti/drivers/RCL");
 
 /* ======== POWER ======== */
 var Power = scripting.addModule("/ti/drivers/Power");
-Power.policyFunction = "PowerCC23X0_doWFI";
+/* For CC27XX Device Family */
+if (lpName.match(/CC27\d\d/))
+{
+    Power.policyFunction = "PowerCC27XX_doWFI";
+}
+/* For CC23XX Device Family */
+else if (lpName.match(/CC23\d\d/))
+{
+    Power.policyFunction = "PowerCC23X0_doWFI";
+}
 
 /* ======== SPI ======== */
 var SPI = scripting.addModule("/ti/drivers/SPI");
@@ -142,6 +153,19 @@ displayUART.uart.rxPinInstance.$name = "CONFIG_GPIO_UART_RX";
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x00004650;
+if (lpName.match(/CC27\d\d/))
+{
+    FreeRTOS.heapSize         = 0x00010000;
+}
+else
+{
+    FreeRTOS.heapSize         = 0x00004650;
+}
 FreeRTOS.timerStackSize       = 0x00000180;
 FreeRTOS.idleStackSize        = 0x00000100;
+
+/* For CC27XX FPGA */
+if (lpName == "LP_EM_CC2755P10_FPGA" || lpName == "LP_EM_CC2745R10_FPGA")
+{
+    FreeRTOS.cpuFrequency = 24000000;
+}

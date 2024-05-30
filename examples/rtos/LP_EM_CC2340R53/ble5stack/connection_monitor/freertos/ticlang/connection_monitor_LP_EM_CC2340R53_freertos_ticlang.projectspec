@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+    <applicability>
+        <when>
+            <context
+                deviceFamily="ARM"
+                deviceId="Cortex M.CC2340R53"
+            />
+        </when>
+    </applicability>
+
+    <project
+        title="connection_monitor app"
+        name="connection_monitor_LP_EM_CC2340R53_freertos_ticlang"
+        configurations="Release, Debug"
+        toolChain="TICLANG"
+        connection="TIXDS110_Connection.xml"
+        device="Cortex M.CC2340R53"
+        ignoreDefaultDeviceSettings="true"
+        ignoreDefaultCCSSettings="true"
+        products="com.ti.SIMPLELINK_LOWPOWER_F3_SDK;sysconfig"
+        compilerBuildOptions="
+            -I${PROJECT_ROOT}
+            -I${PROJECT_ROOT}/${ConfigName}
+            -I${PROJECT_LOC}/Application
+            -I${PROJECT_LOC}/RTLSCtrl
+            @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/build_components.opt
+            @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/config/factory_config.opt
+            @${PROJECT_LOC}/Tools/Defines/connection_monitor_app.opt
+            @${PROJECT_LOC}/Tools/Defines/build_config.opt
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/hal/src/common
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/hal/src/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/hal/src/target/_common
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv
+            -std=gnu9x
+            -g
+            -Oz
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/controller/cc26xx/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/rom
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/npi/stack
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/heapmgr
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/profiles/dev_info
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/profiles/simple_profile
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/osal/src/inc
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/services/src/saddr
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/services/src/sdata
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/cc26xx
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/icall/src
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/profiles/health_thermometer
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/bleapp/services/health_thermometer
+            -DCC2340R53_LP
+            -DCC23X0
+            -DNVOCMP_NWSAMEITEM=1
+            -DFLASH_ONLY_BUILD
+            -DUSE_RCL
+            -DNVOCMP_NVPAGES=6
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/include
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/portable/GCC/ARM_CM0
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
+            -DFREERTOS
+            -DNVOCMP_POSIX_MUTEX
+            -gdwarf-3
+            -mcpu=cortex-m0plus
+            -march=thumbv6m
+            -mfloat-abi=soft
+            -mthumb
+        "
+        linkerBuildOptions="
+            -Wl,--diag_wrap=off
+            -Wl,--display_error_number
+            -Wl,-x
+            -Wl,-c
+            -L${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
+            -L${PROJECT_BUILD_DIR}/syscfg
+            -lti_utils_build_linker.cmd.genlibs
+            -Wl,--rom_model
+            -Wl,--warn_sections
+            -L${CG_TOOL_ROOT}/lib
+            -llibc.a
+        "
+        postBuildStep="
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileName} ${BuildArtifactFileBaseName}.hex
+        "
+        sysConfigBuildOptions="
+            --product ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/.metadata/product.json
+            --compiler ticlang
+        "
+        description="connection_monitor demo application">
+
+        <property name="buildProfile" value="release"/>
+        <property name="isHybrid" value="true"/>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/Examples_source/connection_monitor/README.md" openOnCreation="false" excludeFromBuild="false" action="link">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/Examples_source/connection_monitor/build_config.opt" openOnCreation="false" excludeFromBuild="false" action="link">
+        </file>
+        <file path="../../Application/micro_cm_app.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Application">
+        </file>
+        <file path="../../Application/micro_cm_app.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Application">
+        </file>
+        <file path="../../Application/micro_ble_cm.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Application">
+        </file>
+        <file path="../../Application/micro_ble_cm.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Application">
+        </file>
+        <file path="../../Tools/Defines/connection_monitor_app.opt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Tools/Defines">
+        </file>
+        <file path="../../Tools/Defines/build_config.opt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="Tools/Defines">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/hal/src/common/hal_assert.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HAL/Common">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/hal/src/inc/hal_assert.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HAL/Include">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/common/cc26xx/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/npi_tl_uart.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/Transport/UART">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/npi_tl_uart.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/Transport/UART">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/npi_tl.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/Transport">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/npi_tl.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/Transport">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/npi_data.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/U_NPI">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/npi_task.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/U_NPI">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/npi_task.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/U_NPI">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/npi_util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/U_NPI">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/npi/src/unified/inc/npi_util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="NPI/U_NPI">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/crc.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/crc.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvocmp.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvocmp.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvintf.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="Drivers/NV">
+        </file>
+        <file path="../../RTLSCtrl/rtls_ble.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="../../RTLSCtrl/rtls_ctrl.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="../../RTLSCtrl/rtls_ctrl.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="../../RTLSCtrl/rtls_ctrl_api.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="../../RTLSCtrl/rtls_host.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="../../RTLSCtrl/rtls_host_npi.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="RTLSCtrl">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/microstack/port.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc/port.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/microstack/uble.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc/uble.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/microstack/ugap.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc/ugap.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/microstack/cc23xx/ull.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc/ull.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/microstack/cc23xx/urcli.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble5stack_flash/inc/urcli.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="uStack">
+        </file>
+        <file path="../../Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../freertos/micro_cm_app.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../freertos/ticlang/lpf3_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+    </project>
+</projectSpec>

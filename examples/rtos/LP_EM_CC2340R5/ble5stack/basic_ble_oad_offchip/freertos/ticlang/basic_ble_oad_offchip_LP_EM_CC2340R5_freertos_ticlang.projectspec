@@ -32,7 +32,6 @@
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/devices/cc23x0r5/driverlib
             -I${PROJECT_LOC}/app
             -DICALL_NO_APP_EVENTS
-            -mcpu=cortex-m4
             -mthumb
             -mlittle-endian
             -std=gnu99
@@ -70,6 +69,7 @@
             -DNVOCMP_NWSAMEITEM=1
             -DFLASH_ONLY_BUILD
             -DUSE_RCL
+            -DNVOCMP_NVPAGES=6
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
             -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/include
@@ -103,7 +103,6 @@
             ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x76000 --version 1.0.0 --pad-header --pad --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${BuildArtifactFileBaseName}_noheader.bin ${BuildArtifactFileBaseName}_v1.bin;
             ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/mcuboot/imgtool sign --header-size 0x100 --align 4 --slot-size 0x76000 --version 2.0.0 --pad-header --pad --key ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/root-ec-p256.pem ${BuildArtifactFileBaseName}_noheader.bin ${BuildArtifactFileBaseName}_v2.bin
         "
-        enableSysConfigTool="true"
         sysConfigBuildOptions="
             --product ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/.metadata/product.json
             --compiler ticlang
@@ -228,7 +227,7 @@
         </file>
         <file path="../../common/Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../freertos/ticlang/cc23x0_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../freertos/ticlang/lpf3_app_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
     </project>
 </projectSpec>

@@ -90,6 +90,10 @@ const RCL = scripting.addModule("/ti/drivers/RCL");
 
 /* ======== POWER ======== */
 var Power = scripting.addModule("/ti/drivers/Power");
+if (lpName.match(/CC27\d\d/))
+{
+    Power.policyFunction = "PowerCC27XX_doWFI";
+}
 
 /* ======== RNG ======== */
 var RNG = scripting.addModule("/ti/drivers/RNG");
@@ -138,9 +142,22 @@ GPIO3.$name       = "CONFIG_GPIO_LED_RED";
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x00005000;
+if (lpName.match(/CC27\d\d/))
+{
+    FreeRTOS.heapSize         = 0x00010000;
+}
+else
+{
+    FreeRTOS.heapSize         = 0x00004D50;
+}
 FreeRTOS.timerStackSize       = 0x00000190;
 FreeRTOS.idleStackSize        = 0x00000130;
+
+/* For CC27XX FPGA */
+if (lpName == "LP_EM_CC2755P10_FPGA" || lpName == "LP_EM_CC2745R10_FPGA")
+{
+    FreeRTOS.cpuFrequency = 24000000;
+}
 
 /* ======== BLE ======== */
 var ble = scripting.addModule("/ti/ble5stack/ble");
@@ -179,3 +196,9 @@ FreeRTOS.heapSize = 0x000044B0;
 /* ======== BLE ======== */
 ble.basicBLE = true;
 ble.basicBLEProfiles = true;
+
+// Device role
+ble.deviceRole = "PERIPHERAL_CFG";
+
+// Pairing Mode
+ble.bondPairing = "GAPBOND_PAIRING_MODE_WAIT_FOR_REQ";

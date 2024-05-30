@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2023, Texas Instruments Incorporated
+ Copyright (c) 2013-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -47,12 +47,12 @@
 /**************************************************************************************************
  *                                            INCLUDES
  **************************************************************************************************/
+#include "osal_snv.h"
+#include "osal.h"
 #include <icall.h>
 #include "hal_types.h"
 #include "hal_mcu.h"
-#include "osal.h"
 #include "osal_tasks.h"
-#include "osal_snv.h"
 
 
 /* LL */
@@ -172,6 +172,11 @@ void osalInitTasks( void )
 #endif
 
   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+  if ( tasksEvents == NULL )
+  {
+    // The initialization of the device failed, there is no reason to continue
+    while(1);
+  }
   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
 
   /* LL Task */
@@ -262,13 +267,14 @@ int stack_main( void *arg )
   }
 
 #ifdef CC23X0
+#ifndef USE_HSM
   if (LL_initRNGNoise() != LL_STATUS_SUCCESS)
   {
 	/* abort */
     ICall_abort();
   }
 #endif
-
+#endif
   // Disable interrupts
   halIntState_t state;
   HAL_ENTER_CRITICAL_SECTION(state);
