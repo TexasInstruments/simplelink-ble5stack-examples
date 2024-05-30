@@ -35,6 +35,8 @@
  *  basic_ble.syscfg
  */
 
+const lpName = system.getScript("/ti/ble5stack/ble_common.js").getBoardOrLaunchPadName(true);
+
 /* ======== AESCCM ======== */
 var AESCCM = scripting.addModule("/ti/drivers/AESCCM");
 var aesccm = AESCCM.addInstance();
@@ -88,7 +90,16 @@ const RCL = scripting.addModule("/ti/drivers/RCL");
 
 /* ======== POWER ======== */
 var Power = scripting.addModule("/ti/drivers/Power");
-Power.policyFunction = "PowerCC23X0_doWFI";
+//* For CC27XX Device Family */
+if (lpName.match(/CC27\d\d/))
+{
+    Power.policyFunction = "PowerCC27XX_doWFI";
+}
+/* For CC23XX Device Family */
+else if (lpName.match(/CC23\d\d/))
+{
+    Power.policyFunction = "PowerCC23X0_doWFI";
+}
 
 /* ======== RNG ======== */
 var RNG = scripting.addModule("/ti/drivers/RNG");
@@ -126,7 +137,7 @@ for(var setting in bleCcfgSettings)
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
-FreeRTOS.heapSize             = 0x00004B50;
+FreeRTOS.heapSize             = 0x00004A50;
 FreeRTOS.timerStackSize       = 0x00000180;
 FreeRTOS.idleStackSize        = 0x00000100;
 

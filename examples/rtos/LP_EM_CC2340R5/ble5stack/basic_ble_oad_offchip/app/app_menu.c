@@ -7,7 +7,7 @@ Target Device: cc23xx
 
 ******************************************************************************
 
- Copyright (c) 2022-2023, Texas Instruments Incorporated
+ Copyright (c) 2022-2024, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -311,7 +311,7 @@ void Menu_connectToDeviceCB(uint8 index)
     BLEAppUtil_ConnectParams_t connParams =
     {
      .peerAddrType = menuScanRes[index].addressType,
-     .phys = INIT_PHY_1M,
+     .phys = DEFAULT_INIT_PHY,
      .timeout = 1000
     };
 

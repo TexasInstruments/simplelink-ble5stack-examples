@@ -58,6 +58,7 @@ CFLAGS += -I../.. \
     -DNVOCMP_NWSAMEITEM=1 \
     -DFLASH_ONLY_BUILD \
     -DUSE_RCL \
+    -DNVOCMP_NVPAGES=6 \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/drivers/rcl" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/posix/iar" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/third_party/freertos/include" \
@@ -80,7 +81,7 @@ LFLAGS += --keep __vector_table \
     --config_def PAGE_ALIGN=-1 \
     --threaded_lib \
     -fti_utils_build_linker.cmd.genlibs \
-    --config ../../freertos/iar/cc23x0_app_and_stack_freertos.icf \
+    --config ../../freertos/iar/lpf3_app_and_stack_freertos.icf \
     --map "$(NAME).map" \
     --silent \
     --semihosting=iar_breakpoint \

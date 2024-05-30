@@ -56,6 +56,7 @@
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
         <define>USE_RCL</define>
+        <define>NVOCMP_NVPAGES=6</define>
         <define>FREERTOS</define>
         <define>NVOCMP_POSIX_MUTEX</define>
     </defines>
@@ -76,7 +77,7 @@
 
     <linkerFile>
         <override>true</override>
-        <path>$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf</path>
+        <path>$PROJ_DIR$/lpf3_app_and_stack_freertos.icf</path>
     </linkerFile>
 
     <linkerExtraOptions>
@@ -119,7 +120,7 @@
 
     <files>
         <path copyTo="$PROJ_DIR$/basic_ble_ptm.syscfg">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_ptm/freertos/basic_ble_ptm.syscfg</path>
-        <path copyTo="$PROJ_DIR$/cc23x0_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_ptm/freertos/iar/cc23x0_app_and_stack_freertos.icf</path>
+        <path copyTo="$PROJ_DIR$/lpf3_app_and_stack_freertos.icf">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_ptm/freertos/iar/lpf3_app_and_stack_freertos.icf</path>
         <path copyTo="$PROJ_DIR$/main_freertos.c">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_ptm/common/Startup/main_freertos.c</path>
         <path copyTo="$PROJ_DIR$/README.html">$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/examples/rtos/LP_EM_CC2340R5/ble5stack/basic_ble_ptm/README.html</path>
         <group name="app" build="true">
