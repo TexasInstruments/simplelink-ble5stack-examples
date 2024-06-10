@@ -72,7 +72,11 @@ CFLAGS += -I../.. \
     --vla
 
 LFLAGS += --keep __vector_table \
+<<<<<<< HEAD
     "$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/lib_projects/cc2340r5/OneLib/lib/iar/m0p/OneLib.a" \
+=======
+    "$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/lib_projects/CC2340R5/OneLib/lib/iar/m0p/OneLib.a" \
+>>>>>>> sdk-next
     "-L$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source" \
     "-L$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/kernel" \
     --config_def PAGE_ALIGN=-1 \
