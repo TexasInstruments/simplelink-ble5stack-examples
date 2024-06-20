@@ -74,7 +74,7 @@ LFLAGS += -Wl,--diag_wrap=off \
     -Wl,--display_error_number \
     -Wl,-x \
     -Wl,-c \
-    "-l$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/lib_projects/cc2340r5/OneLib/lib/ticlang/m0p/OneLib.a" \
+    "-l$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble5stack_flash/lib_projects/CC2340R5/OneLib/lib/ticlang/m0p/OneLib.a" \
     "-L$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source" \
     ti_utils_build_linker.cmd.genlibs \
     ../../freertos/ticlang/lpf3_app_freertos.cmd \
