@@ -1,4 +1,4 @@
-### simplelink_cc13xx_cc26xx_sdk  Based ble5stack Boards
+### Supported boards for ble5stack examples in simplelink_cc13xx_cc26xx_sdk
 * CC1352P1_LAUNCHXL
 * CC1352P_2_LAUNCHXL
 * CC1352P_4_LAUNCHXL

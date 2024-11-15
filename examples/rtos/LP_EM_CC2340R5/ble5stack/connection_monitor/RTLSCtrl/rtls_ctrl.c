@@ -477,8 +477,8 @@ void RTLSCtrl_connResultEvt(uint16_t connHandle, uint8_t status)
     {
       if ((gRtlsData.connStateBm[connHandle] & RTLS_STATE_CONNECTED) != RTLS_STATE_CONNECTED)
       {
-          gRtlsData.connStateBm[connHandle] |= RTLS_STATE_CONNECTED;
-          gRtlsData.numActiveConns++;
+        gRtlsData.connStateBm[connHandle] |= RTLS_STATE_CONNECTED;
+        gRtlsData.numActiveConns++;
       }
     }
     else if (status == RTLS_LINK_TERMINATED)

@@ -54,11 +54,8 @@
 #include "rtls_ctrl.h"
 #include "rtls_ctrl_api.h"
 
-#ifdef USE_RCL
 #include <ti/drivers/rcl/RCL_Scheduler.h>
-#else
-#include <urfc.h>
-#endif
+
 /*********************************************************************
  * MACROS
  */
@@ -146,7 +143,7 @@ static void MicroCmApp_processMicroCmAppMsg(uint8_t *pMsg);
 static void MicroCmApp_processCmMsg(uint8_t *pMsg);
 static void MicroCmApp_monitorIndicationEvt(uint8_t *pData);
 static void MicroCmApp_monitorCompleteEvt(uint8_t *pData);
-static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState);
+static void MicroCmApp_monitorStateChangeEvt(uint8_t *pData);
 
 // Handling RTLS Control events
 static void MicroCmApp_processRtlsCtrlMsg(uint8_t *pMsg);
@@ -238,13 +235,11 @@ static void MicroCmApp_processRtlsCtrlMsg(uint8_t *pMsg)
       uint8_t sessionId;
 
       sessionId = MicroCmApp_getSessionId(termInfo->connHandle);
-      if (sessionId == CM_INVALID_SESSION_ID)
+      if (sessionId != CM_INVALID_SESSION_ID)
       {
-        // Ignore the command, session was not started or already stopped
-        return;
+        MicroCmApp_terminateLinkReq(sessionId);
       }
 
-      MicroCmApp_terminateLinkReq(sessionId);
     }
     break;
 
@@ -276,7 +271,7 @@ static void MicroCmApp_processCmMsg(uint8_t *pMsg)
   {
     case CM_MONITOR_STATE_CHANGED_EVT:
     {
-      MicroCmApp_monitorStateChangeEvt(*pEvt->pData);
+      MicroCmApp_monitorStateChangeEvt(pEvt->pData);
     }
     break;
 
@@ -431,12 +426,30 @@ static void MicroCmApp_terminateLinkReq(uint8_t sessionId)
  */
 static void MicroCmApp_monitorIndicationEvt(uint8_t *pData)
 {
+  volatile uint32_t keyHwi;
   if (pData != NULL)
   {
     packetReceivedEvt_t *pPacketInfo = (packetReceivedEvt_t *)pData;
-    if (pPacketInfo->pPayload != NULL)
+    switch(pPacketInfo->status)
     {
-      free(pPacketInfo->pPayload);
+      case SUCCESS:
+      {
+        if (pPacketInfo->pPayload != NULL)
+        {
+          keyHwi = Hwi_disable();
+          free(pPacketInfo->pPayload);
+          Hwi_restore(keyHwi);
+        }
+        break;
+      }
+
+      case MSG_BUFFER_NOT_AVAIL:
+      {
+        break;
+      }
+
+      default:
+        break;
     }
   }
 }
@@ -460,8 +473,8 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
   uint8_t channel;
   rtlsStatus_e status;
   uint16_t hostConnHandle;
-  port_key_t key;
-  port_key_t key_h;
+  volatile port_key_t key;
+  volatile port_key_t key_h;
 
   // Convert CM Status to RTLS Status
   if (pCompleteEvt->status != CM_FAILED_NOT_ACTIVE)
@@ -595,13 +608,14 @@ uint8_t MicroCmApp_getSessionId(uint16_t hostConnHandle)
  *
  * @brief   This function will be called for each BLE CM state change
  *
- * @param   newState - The new state
+ * @param   pData - a pointer to the message
  *
  * @return  none
  */
-static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState)
+static void MicroCmApp_monitorStateChangeEvt(uint8_t *pData)
 {
-  switch (newState)
+  ugapMonitorState_t* pNewState = (ugapMonitorState_t *)pData;
+  switch (*pNewState)
   {
     case UGAP_MONITOR_STATE_INITIALIZED:
     {

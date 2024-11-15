@@ -59,9 +59,7 @@ CFLAGS += -I../.. \
     -DCC23X0 \
     -DNVOCMP_NWSAMEITEM=1 \
     -DFLASH_ONLY_BUILD \
-    -DUSE_RCL \
     -DNVOCMP_NVPAGES=6 \
-    "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/drivers/rcl" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/posix/ticlang" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/third_party/freertos/include" \
     "-I$(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/third_party/freertos/portable/GCC/ARM_CM0" \

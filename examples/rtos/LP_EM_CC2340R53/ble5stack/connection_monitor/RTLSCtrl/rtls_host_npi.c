@@ -62,10 +62,6 @@
 #include "npi_task.h"
 #include "npi_util.h"
 
-#ifndef USE_RCL
-#include <driverlib/ioc.h>
-#define NPITask_freeFrameData NPITask_freeFrame
-#endif
 /*********************************************************************
  * MACROS
  */
@@ -144,13 +140,8 @@ void RTLSHost_openHostIf(pfnRtlsCtrlProcessMsgCb rtlsAppCb)
   NPITask_Params_init(NPI_SERIAL_TYPE_UART, &npiPortParams);
 
   npiPortParams.stackSize = NPI_TASK_STACK_SIZE;
-#ifdef USE_RCL
   npiPortParams.mrdyGpioIndex = 0 /*MRDY_GPIO*/;
   npiPortParams.srdyGpioIndex = 0 /*SRDY_GPIO*/;
-#else
-  npiPortParams.mrdyGpioIndex = MRDY_GPIO;
-  npiPortParams.srdyGpioIndex = SRDY_GPIO;
-#endif
   npiPortParams.bufSize   = NPI_MSG_BUFF_SIZE;
   npiPortParams.portParams.uartParams.baudRate = 460800;
 
@@ -172,7 +163,6 @@ void RTLSHost_openHostIf(pfnRtlsCtrlProcessMsgCb rtlsAppCb)
 #endif
 }
 
-#ifdef USE_RCL
 uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint8_t *pData, uint16_t dataLen)
 {
     _npiFrame_t npiMsg;
@@ -204,38 +194,7 @@ uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint
     }
     return SUCCESS;
 }
-#else
-uint8_t RTLSHost_createAndSendNpiMessage(uint8_t cmdId, uint8_t cmdTypeNpi, uint8_t *pData, uint16_t dataLen)
-{
-    _npiFrame_t *npiMsg = NULL;
 
-    npiMsg = (_npiFrame_t *)NPIUtil_malloc(sizeof(_npiFrame_t) + dataLen);
-
-    // Build and send the NPI message
-    if (npiMsg != NULL)
-    {
-      npiMsg->dataLen = dataLen;
-      npiMsg->cmd0 = cmdTypeNpi;
-      npiMsg->cmd1 = cmdId;
-
-      // If we have any data to send
-      if ((pData != NULL) && (0 != dataLen))
-      {
-        npiMsg->pData = (uint8_t *)((uint32_t)npiMsg + sizeof(_npiFrame_t));
-        memcpy(npiMsg->pData, pData, dataLen);
-      }
-
-      // Forward npiFrame to uNPI
-      if (NPITask_sendToHost(npiMsg) != NPI_SUCCESS)
-      {
-       NPIUtil_free((uint8_t *)npiMsg);
-
-       return FAILURE;
-      }
-    }
-    return SUCCESS;
-}
-#endif
 /*********************************************************************
  * @fn      RTLSHost_sendMsg
  *

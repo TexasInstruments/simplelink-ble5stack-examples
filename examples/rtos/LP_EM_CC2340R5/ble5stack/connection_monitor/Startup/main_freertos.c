@@ -77,9 +77,7 @@
 
 #include "micro_cm_app.h"
 
-#ifdef USE_RCL
 #include DeviceFamily_constructPath(inc/hw_fcfg.h)
-#endif
 
 /*******************************************************************************
  * MACROS

@@ -35,6 +35,8 @@
  *  micro_cm_app.syscfg
  */
 
+const lpName = system.getScript("/ti/ble5stack/ble_common.js").getBoardOrLaunchPadName(true);
+
 /* ======== AESCCM ======== */
 var AESCCM = scripting.addModule("/ti/drivers/AESCCM");
 var aesccm = AESCCM.addInstance();
@@ -141,6 +143,17 @@ bleRadioSetModule.paramVisibility = false;
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
+
 FreeRTOS.heapSize             = 0x00005000;
+
+if (lpName.match(/CC27\d\d/))
+{
+    FreeRTOS.heapSize         = 0x00010000;
+}
+if (lpName == "LP_EM_CC2340R53")
+{
+    FreeRTOS.heapSize         = 0x0000A000;
+}
+
 FreeRTOS.timerStackSize       = 0x00000180;
 FreeRTOS.idleStackSize        = 0x00000100;

@@ -137,7 +137,18 @@ for(var setting in bleCcfgSettings)
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
+
 FreeRTOS.heapSize             = 0x00004A50;
+
+if (lpName.match(/CC27\d\d/))
+{
+    FreeRTOS.heapSize         = 0x00010000;
+}
+if (lpName == "LP_EM_CC2340R53")
+{
+    FreeRTOS.heapSize         = 0x0000A000;
+}
+
 FreeRTOS.timerStackSize       = 0x00000180;
 FreeRTOS.idleStackSize        = 0x00000100;
 

@@ -41,7 +41,6 @@
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/profiles/health_thermometer</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/bleapp/services/health_thermometer</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/ble5stack_flash/npi/src/inc</path>
-        <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/drivers/rcl</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/ti/posix/iar</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/freertos/include</path>
         <path>$SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR$/source/third_party/freertos/portable/IAR/ARM_CM0</path>
@@ -52,7 +51,6 @@
         <define>CC23X0</define>
         <define>NVOCMP_NWSAMEITEM=1</define>
         <define>FLASH_ONLY_BUILD</define>
-        <define>USE_RCL</define>
         <define>NVOCMP_NVPAGES=6</define>
         <define>FREERTOS</define>
         <define>NVOCMP_POSIX_MUTEX</define>

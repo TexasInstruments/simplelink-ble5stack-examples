@@ -18,6 +18,7 @@
 #include "micro_ble_cm.h"
 #include "rtls_ctrl.h"
 #include "rtls_ctrl_api.h"
+
 /*********************************************************************
  * MACROS
  */
@@ -121,7 +122,6 @@ uint8_t gUpdateSessionMissEvents[CM_MAX_SESSIONS] = {0};
 cmNewConn_t  *pCmNewConnPend          = NULL;   //! List of new connection requests
 cmListElem_t *pCmConnSortedList       = NULL;   //! Sorted list active connections by their start time
 cmNewConn_t  *pCmLastConnPend         = NULL;   //! pointer to the last element of the new connection requests
-
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -245,6 +245,8 @@ static void processChanMap(uint8_t sessionId, uint8_t *chanMap)
  */
 static void addConnSortedList(cmListElem_t *newElem)
 {
+  volatile uint32_t keyHwi;
+  keyHwi = Hwi_disable();
   cmListElem_t *elem = pCmConnSortedList;
 
   // In case of empty list or newElemt start time is the smallest
@@ -252,16 +254,20 @@ static void addConnSortedList(cmListElem_t *newElem)
   {
     newElem->next = pCmConnSortedList;
     pCmConnSortedList = newElem;
+    Hwi_restore(keyHwi);
     return;
   }
 
   // Find the location of the newElem in the sorted list
   while (elem->next != NULL && uble_timeCompare(newElem->startTime, elem->next->startTime))
+  {
     elem = elem->next;
+  }
 
   // Add new element to the sorted list
   newElem->next = elem->next;
   elem->next = newElem;
+  Hwi_restore(keyHwi);
 
   return;
 }
@@ -278,9 +284,12 @@ static void addConnSortedList(cmListElem_t *newElem)
  */
 static uint8_t removeConnSortedList(int8_t sessionId, int8_t freeElem)
 {
+  volatile uint32_t keyHwi;
+  keyHwi = Hwi_disable();
+
   cmListElem_t *elem = pCmConnSortedList;
   cmListElem_t *pPrev;
-  volatile uint32_t keyHwi;
+  uint8_t status = CM_FAILED_NOT_FOUND;
 
   while (elem != NULL)
   {
@@ -299,18 +308,20 @@ static uint8_t removeConnSortedList(int8_t sessionId, int8_t freeElem)
       if (freeElem)
       {
         // Free allocated memory
-        keyHwi = Hwi_disable();
-        free(elem);
-        Hwi_restore(keyHwi);
-      }
 
-      return CM_SUCCESS;
+        free(elem);
+        elem = NULL;
+      }
+      status = CM_SUCCESS;
+      break;
     }
+
     pPrev = elem;
     elem = elem->next;
   }
+  Hwi_restore(keyHwi);
 
-  return CM_FAILED_NOT_FOUND;
+  return status;
 }
 
 /*********************************************************************
@@ -322,6 +333,9 @@ static uint8_t removeConnSortedList(int8_t sessionId, int8_t freeElem)
  */
 static void realignConnSortedList(void)
 {
+  volatile uint32_t keyHwi;
+
+  keyHwi = Hwi_disable();
   uint32_t     currentTime = ull_getCurrentTime();
   cmListElem_t *elem;
 
@@ -346,6 +360,8 @@ static void realignConnSortedList(void)
     elem->startTime = ubCMConnInfo.ArrayOfConnInfo[elem->sessionId-1].nextStartTime;
     addConnSortedList(elem);
   }
+
+  Hwi_restore(keyHwi);
 
   return;
 }
@@ -879,7 +895,7 @@ static void monitor_stateChangeCB(ugapMonitorState_t newState)
   *pNewState = newState;
 
   // Notify application that monitor state has changed
-  if (FALSE == ubCM_callApp(CM_MONITOR_STATE_CHANGED_EVT, pNewState))
+  if (FALSE == ubCM_callApp(CM_MONITOR_STATE_CHANGED_EVT,(uint8_t *)pNewState))
   {
     // Calling App failed, free the message
     keyHwi = Hwi_disable();
@@ -914,15 +930,6 @@ static void monitor_indicationCB(bStatus_t status, uint8_t sessionId,
   // Access the connection info array
   connInfo = &ubCMConnInfo.ArrayOfConnInfo[sessionId-1];
 
-  // Copy RF status
-
-  /* We use memcpy here in order to avoid memory alignment issues (aka in FREERTOS)*/
-  memcpy((uint8_t*)&timeStamp, (pPayload + len + CM_TIMESTAMP_OFFSET), ULL_SUFFIX_TIMESTAMP_SIZE);
-  memcpy(&rssi,   (pPayload + len + CM_RSSI_OFFSET), ULL_SUFFIX_RSSI_SIZE);
-
-  // Save the last indication timeStamp
-  gCmData.lastIndPacketTime = timeStamp;
-
   keyHwi = Hwi_disable();
   pPacketInfo = malloc(sizeof(packetReceivedEvt_t));
   Hwi_restore(keyHwi);
@@ -930,112 +937,133 @@ static void monitor_indicationCB(bStatus_t status, uint8_t sessionId,
   // Drop the packet if we could not allocate
   if (!pPacketInfo)
   {
-    free(pPayload);
+    if (pPayload != NULL)
+    {
+      // If the status is SUCCESS, then the controller allocated an indication payload
+      keyHwi = Hwi_disable();
+      free(pPayload);
+      Hwi_restore(keyHwi);
+    }
     return;
   }
 
   pPacketInfo->len = len;
   pPacketInfo->pPayload = pPayload;
   pPacketInfo->seesionId = sessionId;
+  pPacketInfo->status = status;
 
-  // In case it is not the first big RX window and it's the first packet in the current window
-  if (connInfo->isFirstPktMet != FALSE && gCmData.cmCentral == TRUE)
+  if (status == SUCCESS && pPayload != NULL)
   {
-    // Check if the new anchor point timing is in the range of the predicted timing taking into consideration the drift.
-    // If it's not in the range, this means we got only the peripheral packet in the RX window.
-    // To prevent shifting the anchor point.
+    // Copy RF status
+    /* We use memcpy here in order to avoid memory alignment issues (aka in FREERTOS)*/
+    memcpy((uint8_t*)&timeStamp, (pPayload + len + CM_TIMESTAMP_OFFSET), ULL_SUFFIX_TIMESTAMP_SIZE);
+    memcpy(&rssi,   (pPayload + len + CM_RSSI_OFFSET), ULL_SUFFIX_RSSI_SIZE);
 
-    uint32 expectedTimeStampCentral;
-    uint32 threshold;
-    uint32 delta;
-    uint8 isExpectedTimeLarger = FALSE;
+    // Save the last indication timeStamp
+    gCmData.lastIndPacketTime = timeStamp;
 
-    expectedTimeStampCentral = connInfo->timeStampCentral + connInfo->numEvents * connInfo->connInterval * BLE_TO_RAT;
-
-    // If the expectedTimeStampCentral larger
-    if (uble_timeCompare(expectedTimeStampCentral, timeStamp))
+    // In case it is not the first big RX window and it's the first packet in the current window
+    if (connInfo->isFirstPktMet != FALSE && gCmData.cmCentral == TRUE)
     {
-      delta = uble_timeDelta(expectedTimeStampCentral, timeStamp);
-      isExpectedTimeLarger = TRUE;
-    }
-    else
-    {
-      // The connInfo->timeStampCentral larger
-      delta = uble_timeDelta(timeStamp, expectedTimeStampCentral);
-      isExpectedTimeLarger = FALSE;
-    }
+      // Check if the new anchor point timing is in the range of the predicted timing taking into consideration the drift.
+      // If it's not in the range, this means we got only the peripheral packet in the RX window.
+      // To prevent shifting the anchor point.
 
-    // The threshold taking in consideration the drift * numEvents + BLE_PACKET_THRESHOLD
-    threshold = (connInfo->numEvents * connInfo->connInterval * connInfo->combSCA / BLE_RAT_IN_100US) + BLE_PACKET_THRESHOLD;
+      uint32 expectedTimeStampCentral;
+      uint32 threshold;
+      uint32 delta;
+      uint8 isExpectedTimeLarger = FALSE;
 
-    // If the timing of the received packet is larger than the threshold, this means the packet is is a peripheral packet and not a central packet (since the central packet is received somewhere around the anchor point +- threshold).
-    // due to that, fix the anchor point to the one we calculated.
-    if( delta > threshold )
-    {
-      if (isExpectedTimeLarger == FALSE)
+      expectedTimeStampCentral = connInfo->timeStampCentral + connInfo->numEvents * connInfo->connInterval * BLE_TO_RAT;
+
+      // If the expectedTimeStampCentral larger
+      if (uble_timeCompare(expectedTimeStampCentral, timeStamp))
       {
-        // in case the timestamp of the packet is greater than expected + threshold, that means that we missed the central packet and we got the peripheral's.
-        connInfo->indicationStatus  = MONITOR_UNSTABLE;
+        delta = uble_timeDelta(expectedTimeStampCentral, timeStamp);
+        isExpectedTimeLarger = TRUE;
       }
       else
       {
-        // If isExpectedTimeLarger is TRUE, this means that the packet is Central, but our expectation was wrong due to the previous monitoring session.
-        // this can happen when in the initial monitoring session (where we search for the connection for the first time)
-        // there was C,P,C packets, and we missed the first C packet.
-        // we will not update the connInfo->indicationStatus to unstable so the time stamp central will be updated to the timestamp we got, this happens in the code below.
+        // The connInfo->timeStampCentral larger
+        delta = uble_timeDelta(timeStamp, expectedTimeStampCentral);
+        isExpectedTimeLarger = FALSE;
       }
-    }
-  }
 
-  // In case there is a second packet(or more) that is received after a large time, this means that in the same RX window
-  // there was more than one connection event, so update the anchor point to this new time stamp.
-  if (gCmData.cmCentral == FALSE &&
-     (uble_timeDelta(currentTime, gCmData.lastIndPacketTime) > ((CM_CONN_INTERVAL_MIN -1) * BLE_TO_RAT)))
-  {
-    connInfo->timeStampCentral2 = connInfo->timeStampCentral;
-    connInfo->timeStampCentral  = timeStamp;
-    connInfo->rssiCentral       = rssi;
-    pPacketInfo->centralPacket  = TRUE;
-  }
-  else
-  {
-    if (gCmData.cmCentral == TRUE)
-    {
-      // Central packet
-      if (connInfo->indicationStatus == MONITOR_SUCCESS)
+      // The threshold taking in consideration the drift * numEvents + BLE_PACKET_THRESHOLD
+      threshold = (connInfo->numEvents * connInfo->connInterval * connInfo->combSCA / BLE_RAT_IN_100US) + BLE_PACKET_THRESHOLD;
+
+      // If the timing of the received packet is larger than the threshold, this means the packet is is a peripheral packet and not a central packet (since the central packet is received somewhere around the anchor point +- threshold).
+      // due to that, fix the anchor point to the one we calculated.
+      if( delta > threshold )
       {
-        // The timing of the packet indicates that it's central
-        connInfo->timeStampCentral     = timeStamp;
-        connInfo->timeStampCentral2    = 0;
-        connInfo->lastUnmappedChannel  = connInfo->nextChan;
-        connInfo->rssiCentral          = rssi;
-        connInfo->timesScanned++;
-        gCmData.cmCentral = FALSE;
-
-        if (connInfo->isFirstPktMet == FALSE)
+        if (isExpectedTimeLarger == FALSE)
         {
-          // Indicate that there was a packet captured in the current session.
-          connInfo->isFirstPktMet = TRUE;
+          // in case the timestamp of the packet is greater than expected + threshold, that means that we missed the central packet and we got the peripheral's.
+          connInfo->indicationStatus  = MONITOR_UNSTABLE;
+        }
+        else
+        {
+          // If isExpectedTimeLarger is TRUE, this means that the packet is Central, but our expectation was wrong due to the previous monitoring session.
+          // this can happen when in the initial monitoring session (where we search for the connection for the first time)
+          // there was C,P,C packets, and we missed the first C packet.
+          // we will not update the connInfo->indicationStatus to unstable so the time stamp central will be updated to the timestamp we got, this happens in the code below.
         }
       }
     }
+
+    // In case there is a second packet(or more) that is received after a large time, this means that in the same RX window
+    // there was more than one connection event, so update the anchor point to this new time stamp.
+    if (gCmData.cmCentral == FALSE &&
+       (uble_timeDelta(currentTime, gCmData.lastIndPacketTime) > ((CM_CONN_INTERVAL_MIN -1) * BLE_TO_RAT)))
+    {
+      connInfo->timeStampCentral2 = connInfo->timeStampCentral;
+      connInfo->timeStampCentral  = timeStamp;
+      connInfo->rssiCentral       = rssi;
+      pPacketInfo->centralPacket  = TRUE;
+    }
     else
     {
-      // Peripheral packet
-      connInfo->timeStampPeripheral  = timeStamp;
-      connInfo->rssiPeripheral       = rssi;
+      if (gCmData.cmCentral == TRUE)
+      {
+        // Central packet
+        if (connInfo->indicationStatus == MONITOR_SUCCESS)
+        {
+          // The timing of the packet indicates that it's central
+          connInfo->timeStampCentral     = timeStamp;
+          connInfo->timeStampCentral2    = 0;
+          connInfo->lastUnmappedChannel  = connInfo->nextChan;
+          connInfo->rssiCentral          = rssi;
+          connInfo->timesScanned++;
+          gCmData.cmCentral = FALSE;
 
-      pPacketInfo->centralPacket = FALSE;
+          if (connInfo->isFirstPktMet == FALSE)
+          {
+            // Indicate that there was a packet captured in the current session.
+            connInfo->isFirstPktMet = TRUE;
+          }
+        }
+      }
+      else
+      {
+        // Peripheral packet
+        connInfo->timeStampPeripheral  = timeStamp;
+        connInfo->rssiPeripheral       = rssi;
+
+        pPacketInfo->centralPacket = FALSE;
+      }
     }
   }
-
-  pPacketInfo->status = status;
 
   // Notify application that a packet was received
   if (FALSE == ubCM_callApp(CM_PACKET_RECEIVED_EVT, (uint8_t *)pPacketInfo))
   {
     // Calling App failed, free the message
     keyHwi = Hwi_disable();
+    if (pPayload != NULL)
+    {
+      // If the status is SUCCESS, then the controller allocated an indication payload
+      free(pPayload);
+    }
     free(pPacketInfo);
     Hwi_restore(keyHwi);
   }
@@ -1052,11 +1080,12 @@ static void monitor_indicationCB(bStatus_t status, uint8_t sessionId,
  *
  * @return  None.
  */
-void monitor_completeCB(bStatus_t status, uint8_t sessionId)
+static void monitor_completeCB(bStatus_t status, uint8_t sessionId)
 {
   ubCM_ConnInfo_t *connInfo;
   monitorCompleteEvt_t *pMonitorCompleteEvt;
-  uint8 sessionIndx;
+  uint8_t sessionIndx;
+  uint8_t terminateFlag = FALSE;
   volatile uint32_t keyHwi;
 
   // Indicate that there is no session is monitored right now
@@ -1065,8 +1094,16 @@ void monitor_completeCB(bStatus_t status, uint8_t sessionId)
 
   // Access the connection info array
   connInfo = &ubCMConnInfo.ArrayOfConnInfo[sessionId - 1];
+
   // Update the last start time
   connInfo->lastStartTime = connInfo->nextStartTime;
+
+  // If the threshold for consecutive missing packets is reached, terminate the connection
+  if (connInfo->consecutiveTimesMissed > BLE_CONSECUTIVE_MISSED_CONN_EVT_THRES)
+  {
+    terminateFlag = TRUE;
+    status = MONITOR_UNSTABLE;
+  }
 
   // In case that in the same RX window we listened to two packets, but the timeStamp of the Central is greater than the peripheral,
   // this means that we listened to two packets from different connection events, and can't tell which is for the peripheral and which for the central
@@ -1093,7 +1130,7 @@ void monitor_completeCB(bStatus_t status, uint8_t sessionId)
     pMonitorCompleteEvt->channel = connInfo->currentChan;
 
     // If the threshold for consecutive missing packets is reached, terminate the connection
-    if (connInfo->consecutiveTimesMissed > BLE_CONSECUTIVE_MISSED_CONN_EVT_THRES)
+    if (terminateFlag == TRUE)
     {
       pMonitorCompleteEvt->status = CM_FAILED_NOT_ACTIVE;
     }
@@ -1125,6 +1162,13 @@ void monitor_completeCB(bStatus_t status, uint8_t sessionId)
   else if (status == MONITOR_CONTINUE)
   {
     gCmData.failedSessionToMonitor = sessionId;
+    // Add to the missing counter although the monitor command didn't execute.
+    connInfo->timesMissed++;
+    connInfo->consecutiveTimesMissed++;
+    if(connInfo->consecutiveTimesMissed == BLE_CONSECUTIVE_MISSED_CONN_EVT_THRES)
+    {
+        connInfo->consecutiveTimesMissed++;
+    }
   }
 
   // If there are new pending connections stop monitor other sessions and start with it
@@ -1308,13 +1352,14 @@ uint8_t ubCM_startNewSession(uint8_t hostConnHandle, uint32_t accessAddress,
   volatile uint32_t keyHwi;
   cmNewConn_t       *elem;
   uint8_t           isNewElem = FALSE;
+
+  keyHwi = Hwi_disable();
   // Check if the CM is monitoring new session.
   if( gCmData.isSessionMonitored == TRUE)
   {
     // Insert the connection data to the conncection's pending list.
 
     // Allocate new element for sorted list.
-    keyHwi = Hwi_disable();
     elem = pCmNewConnPend;
     while (elem != NULL )
     {
@@ -1370,7 +1415,10 @@ uint8_t ubCM_startNewSession(uint8_t hostConnHandle, uint32_t accessAddress,
   else
   {
     // Initializes new connection data to start new CM session.
-    return (ubCM_InitCmSession(hostConnHandle, accessAddress, connRole, connInterval, hopValue, currChan, chanMap, crcInit, reqTime));
+    bStatus_t status =  ubCM_InitCmSession(hostConnHandle, accessAddress, connRole, connInterval, hopValue, currChan, chanMap, crcInit, reqTime);
+
+    Hwi_restore(keyHwi);
+    return status;
   }
 }
 
@@ -1472,7 +1520,10 @@ uint8_t ubCM_start(uint8_t sessionId)
  */
 uint8_t ubCM_stop(uint8_t sessionId)
 {
+  volatile uint32_t keyHwi;
   ubCM_ConnInfo_t *connInfo;
+
+  keyHwi = Hwi_disable();
 
   // Access the connection info array
   connInfo = &ubCMConnInfo.ArrayOfConnInfo[sessionId-1];
@@ -1480,10 +1531,11 @@ uint8_t ubCM_stop(uint8_t sessionId)
   // In case there is a session is monitored, mark the session to be stopped in the future
   if (gCmData.isSessionMonitored)
   {
-   if (sessionId > 0)
+   if (sessionId > CM_INVALID_SESSION_ID)
    {
-       connInfo->stopRequested = TRUE;
+     connInfo->stopRequested = TRUE;
    }
+   Hwi_restore(keyHwi);
    return CM_FAILED_NOT_FOUND;
   }
 
@@ -1501,11 +1553,13 @@ uint8_t ubCM_stop(uint8_t sessionId)
     ubCMConnInfo.numHandles--;
     connInfo->stopRequested = FALSE;
 
+    Hwi_restore(keyHwi);
     return CM_SUCCESS;
   }
   else
   {
     connInfo->stopRequested = FALSE;
+    Hwi_restore(keyHwi);
     return CM_FAILED_NOT_FOUND;
   }
 }
@@ -1703,6 +1757,7 @@ uint8_t ubCM_startExt(uint8_t hostConnHandle, uint32_t accessAddress,
  */
 uint8_t ubCM_updateExt(uint8_t sessionId, uint8_t hostConnHandle, uint32_t accessAddress, uint16_t connInterval, uint8_t hopValue, uint8_t nextChan, uint8_t *chanMap, uint32_t crcInit)
 {
+  volatile uint32_t keyHwi;
   uint8_t i;
 
   i = sessionId-1; // index of session id is 1 less than actual id
@@ -1714,8 +1769,10 @@ uint8_t ubCM_updateExt(uint8_t sessionId, uint8_t hostConnHandle, uint32_t acces
     return CM_FAILED_TO_START;
   }
 
+  keyHwi = Hwi_disable();
   memset(ubCMConnInfo.ArrayOfConnInfo[i].chanMap, 0, (sizeof(uint8_t) * CM_MAX_NUM_DATA_CHAN));
   processChanMap(sessionId, chanMap);
+  Hwi_restore(keyHwi);
 
   return CM_SUCCESS;
 }

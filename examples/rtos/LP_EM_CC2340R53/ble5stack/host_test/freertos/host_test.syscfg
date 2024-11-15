@@ -135,9 +135,13 @@ for(var setting in bleRfDesignSettings)
 var custom = scripting.addModule("/ti/devices/radioconfig/custom");
 var bleRadioSetModule;
 
-custom.ble = ["ble"];
+custom.ble = ["ble","adc_noise"];
 var bleRadioSetModule = custom.radioConfigble;
 bleRadioSetModule.paramVisibility = false;
+
+var bleAdvNoiseRadioSetModule = custom.radioConfigadc_noise;
+bleAdvNoiseRadioSetModule.codeExportConfig.symGenMethod = "Custom";
+bleAdvNoiseRadioSetModule.codeExportConfig.phyAbbr = true;
 
 /* ======== Display ======== */
 var Display = scripting.addModule("/ti/display/Display");
@@ -153,14 +157,18 @@ displayUART.uart.rxPinInstance.$name = "CONFIG_GPIO_UART_RX";
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
+
+FreeRTOS.heapSize         = 0x00004650;
+
 if (lpName.match(/CC27\d\d/))
 {
     FreeRTOS.heapSize         = 0x00010000;
 }
-else
+if (lpName == "LP_EM_CC2340R53")
 {
-    FreeRTOS.heapSize         = 0x00004650;
+    FreeRTOS.heapSize         = 0x0000A000;
 }
+
 FreeRTOS.timerStackSize       = 0x00000180;
 FreeRTOS.idleStackSize        = 0x00000100;
 

@@ -142,14 +142,18 @@ GPIO3.$name       = "CONFIG_GPIO_LED_RED";
 /* ======== FreeRTOS ======== */
 const FreeRTOS    = scripting.addModule("/freertos/FreeRTOS");
 const Settings    = scripting.addModule("/ti/posix/freertos/Settings");
+
+FreeRTOS.heapSize         = 0x00004D50;
+
 if (lpName.match(/CC27\d\d/))
 {
     FreeRTOS.heapSize         = 0x00010000;
 }
-else
+if (lpName == "LP_EM_CC2340R53")
 {
-    FreeRTOS.heapSize         = 0x00004D50;
+    FreeRTOS.heapSize         = 0x0000A000;
 }
+
 FreeRTOS.timerStackSize       = 0x00000190;
 FreeRTOS.idleStackSize        = 0x00000130;
 
@@ -191,7 +195,10 @@ ble.advSet1.scanRes1.GAP_ADTYPE_POWER_LEVEL = true;
  */
 
 /* ======== FreeRTOS ======== */
-FreeRTOS.heapSize = 0x000044B0;
+if (lpName == "LP_EM_CC2340R5")
+{
+    FreeRTOS.heapSize = 0x000044B0;
+}
 
 /* ======== BLE ======== */
 ble.basicBLE = true;
