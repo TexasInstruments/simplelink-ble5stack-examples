@@ -10,7 +10,7 @@
 
  ******************************************************************************
    
- Copyright (c) 2015-2024, Texas Instruments Incorporated
+ Copyright (c) 2015-2025, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -1922,11 +1922,21 @@ static void ProjectZero_sendParamUpdate(uint16_t connHandle)
     connIndex = ProjectZero_getConnIndex(connHandle);
     APP_ASSERT(connIndex < MAX_NUM_BLE_CONNS);
 
-    // Deconstruct the clock object
-    Clock_destruct(connList[connIndex].pUpdateClock);
-    // Free clock struct
-    ICall_free(connList[connIndex].pUpdateClock);
-    connList[connIndex].pUpdateClock = NULL;
+    if ( connList[connIndex].pUpdateClock != NULL )
+    {
+        // Stop the clock if it's still alive
+        if (Util_isActive(connList[connIndex].pUpdateClock))
+        {
+            Util_stopClock(connList[connIndex].pUpdateClock);
+        }
+
+        // Deconstruct the clock object
+        Clock_destruct(connList[connIndex].pUpdateClock);
+
+        // Free clock struct
+        ICall_free(connList[connIndex].pUpdateClock);
+        connList[connIndex].pUpdateClock = NULL;
+    }
 
     // Send parameter update
     bStatus_t status = GAP_UpdateLinkParamReq(&req);

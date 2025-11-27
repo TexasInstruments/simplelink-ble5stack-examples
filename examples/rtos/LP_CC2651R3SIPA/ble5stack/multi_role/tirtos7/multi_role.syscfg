@@ -251,7 +251,7 @@ if (system.getRTOS() === "tirtos7")
 
 
     /* ================ Hwi configuration ================ */
-    if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6")
+    if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6" || lpName == "LP_EM_CC2674P10")
     {
         var Hwi = scripting.addModule("/ti/sysbios/family/arm/v8m/Hwi", {}, false);
     }

@@ -635,13 +635,18 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <buildActions>
-                        <buildAction>
-                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
-                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
-                            <buildSequence>postLink</buildSequence>
-                        </buildAction>
-            </buildActions>
+        <buildActions>
+                <buildAction>
+                    <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                    <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                    <buildSequence>postLink</buildSequence>
+                        <outputs>
+                            <file>
+                                <name>dummy_dep_1</name>
+                            </file>
+                        </outputs>
+                </buildAction>
+        </buildActions>
             </data>
         </settings>
         <settings>
@@ -1602,13 +1607,18 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <buildActions>
-                        <buildAction>
-                            <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
-                            <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
-                            <buildSequence>postLink</buildSequence>
-                        </buildAction>
-            </buildActions>
+        <buildActions>
+                <buildAction>
+                    <cmdline>ielftool --ihex --verbose $TARGET_BPATH$.out $TARGET_BPATH$.hex</cmdline>
+                    <workingDirectory>$PROJ_DIR$/$CONFIG_NAME$</workingDirectory>
+                    <buildSequence>postLink</buildSequence>
+                        <outputs>
+                            <file>
+                                <name>dummy_dep_1</name>
+                            </file>
+                        </outputs>
+                </buildAction>
+        </buildActions>
             </data>
         </settings>
         <settings>

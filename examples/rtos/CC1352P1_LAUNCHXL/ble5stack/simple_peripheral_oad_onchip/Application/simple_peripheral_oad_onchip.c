@@ -11,7 +11,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2017-2024, Texas Instruments Incorporated
+ Copyright (c) 2017-2025, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -2115,11 +2115,22 @@ static void SimplePeripheral_processParamUpdate(uint16_t connHandle)
   connIndex = SimplePeripheral_getConnIndex(connHandle);
   SIMPLEPERIPHERAL_ASSERT(connIndex < MAX_NUM_BLE_CONNS);
 
-  // Deconstruct the clock object
-  Clock_destruct(connList[connIndex].pUpdateClock);
-  // Free clock struct
-  ICall_free(connList[connIndex].pUpdateClock);
-  connList[connIndex].pUpdateClock = NULL;
+  // Free clock struct, only in case it is not NULL
+  if (connList[connIndex].pUpdateClock != NULL)
+  {
+    // Stop the clock if it's still alive
+	if (Util_isActive(connList[connIndex].pUpdateClock))
+    {
+      Util_stopClock(connList[connIndex].pUpdateClock);
+    }
+
+    // Deconstruct the clock object
+    Clock_destruct(connList[connIndex].pUpdateClock);
+
+    // Free clock struct
+    ICall_free(connList[connIndex].pUpdateClock);
+    connList[connIndex].pUpdateClock = NULL;
+  }
 
   // Send parameter update
   bStatus_t status = GAP_UpdateLinkParamReq(&req);

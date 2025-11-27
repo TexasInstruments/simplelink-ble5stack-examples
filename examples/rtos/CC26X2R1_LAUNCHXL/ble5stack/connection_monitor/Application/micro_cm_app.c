@@ -48,6 +48,7 @@
 #include "uble.h"
 #include "ugap.h"
 #include "ull.h"
+#include "micro_ble_cm.h"
 
 // RTLS
 #include "rtls_ble.h"
@@ -81,6 +82,9 @@
 #define UCA_TASK_STACK_SIZE                   1024
 #endif
 
+// 4 units equals to 3ms
+#define MIN_CONN_INTERVAL_CHANGE              4
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -102,7 +106,7 @@ typedef struct
     uint8_t    monitorTracking[CM_MAX_SESSIONS];
 } micro_cm_CtrlData_t;
 
-micro_cm_CtrlData_t gmicro_cm_CtrlData =
+micro_cm_CtrlData_t gCmCtrlData =
 {
     .app_threadId           = NULL,
     .app_queueHandle        = NULL,
@@ -143,7 +147,7 @@ static void MicroCmApp_processMicroCmAppMsg(uint8_t *pMsg);
 static void MicroCmApp_processCmMsg(uint8_t *pMsg);
 static void MicroCmApp_monitorIndicationEvt(uint8_t *pData);
 static void MicroCmApp_monitorCompleteEvt(uint8_t *pData);
-static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState);
+static void MicroCmApp_monitorStateChangeEvt(uint8_t *pData);
 
 // Handling RTLS Control events
 static void MicroCmApp_processRtlsCtrlMsg(uint8_t *pMsg);
@@ -230,18 +234,15 @@ static void MicroCmApp_processRtlsCtrlMsg(uint8_t *pMsg)
 
     case RTLS_REQ_TERMINATE_LINK:
     {
-
       rtlsTerminateLinkReq_t *termInfo = (rtlsTerminateLinkReq_t *)pReq->pData;
       uint8_t sessionId;
 
       sessionId = MicroCmApp_getSessionId(termInfo->connHandle);
-      if (sessionId == CM_INVALID_SESSION_ID)
+      if (sessionId != CM_INVALID_SESSION_ID)
       {
-        // Ignore the command, session was not started or already stopped
-        return;
+        MicroCmApp_terminateLinkReq(sessionId);
       }
 
-      MicroCmApp_terminateLinkReq(sessionId);
     }
     break;
 
@@ -273,7 +274,7 @@ static void MicroCmApp_processCmMsg(uint8_t *pMsg)
   {
     case CM_MONITOR_STATE_CHANGED_EVT:
     {
-      MicroCmApp_monitorStateChangeEvt(*pEvt->pData);
+      MicroCmApp_monitorStateChangeEvt(pEvt->pData);
     }
     break;
 
@@ -309,7 +310,7 @@ static void MicroCmApp_processCmMsg(uint8_t *pMsg)
  */
 static void MicroCmApp_enableRtlsSync(rtlsEnableSync_t *enable)
 {
-    gmicro_cm_CtrlData.rtlsSyncEnabled = enable->enable;
+    gCmCtrlData.rtlsSyncEnabled = enable->enable;
 }
 
 /*********************************************************************
@@ -328,22 +329,55 @@ static void MicroCmApp_cmStartReq(uint8_t *pConnInfo)
 
   sessionId = MicroCmApp_getSessionId(pBleConnInfo->connHandle);
 
-  // When a session already exists, stop monitoring the connection, and try to resync.
-  if (ubCM_isSessionActive(sessionId) == CM_SUCCESS)
+  // When a session already exists, stop monitoring the connection, and try to re-sync.
+  if (ubCM_isSessionActive(sessionId) == CM_SUCCESS && pBleConnInfo->accessAddr == ubCMConnInfo.ArrayOfConnInfo[sessionId-1].accessAddr)
   {
-    if (CM_SUCCESS == ubCM_updateExt(sessionId, pBleConnInfo->connHandle,
-                                     pBleConnInfo->accessAddr,
-                                     pBleConnInfo->connInterval,
-                                     pBleConnInfo->hopValue,
-                                     pBleConnInfo->currChan,
-                                     pBleConnInfo->chanMap,
-                                     pBleConnInfo->crcInit))
+    if (CM_FAILED_TO_START == ubCM_updateExt(sessionId, pBleConnInfo->connHandle,
+                                                        pBleConnInfo->accessAddr,
+                                                        pBleConnInfo->connInterval,
+                                                        pBleConnInfo->hopValue,
+                                                        pBleConnInfo->currChan,
+                                                        pBleConnInfo->chanMap,
+                                                        pBleConnInfo->crcInit))
     {
-      return;
+      //connection interval has changed
+      // In case :
+      // 1) the CM didn't meet the first packet,
+      // 2) the new connection interval event close ~ 3 ms ( 4 units ) from the past connection interval (for the same access address, close interval might catch the events after changing
+      //    the connection param update with the same interval).
+      // 3) there  was any param update request
+      // then don't take into consideration the miss events from the last param update because they might be not relevant.
+      if (ubCMConnInfo.ArrayOfConnInfo[sessionId-1].timeStampCentral == 0                       ||
+         (MIN(pBleConnInfo->connInterval,ubCMConnInfo.ArrayOfConnInfo[sessionId-1].connInterval) + MIN_CONN_INTERVAL_CHANGE >=
+          MAX(pBleConnInfo->connInterval,ubCMConnInfo.ArrayOfConnInfo[sessionId-1].connInterval)) ||
+         (ubCM_isAnchorRelevant(ubCMConnInfo.ArrayOfConnInfo[sessionId-1].timeStampCentral) == FALSE)) // check if there was a param update since the last anchor from other handle
+      {
+        gUpdateSessionMissEvents[ubCMConnInfo.ArrayOfConnInfo[sessionId-1].hostConnHandle] = 0;
+      }
+      else
+      {
+        // calculate the number of events missed due to the param update.
+        uint32_t currTime = ull_getCurrentTime();
+        uint32_t deltaTime = uble_timeDelta(currTime, ubCMConnInfo.ArrayOfConnInfo[sessionId-1].timeStampCentral);
+        gUpdateSessionMissEvents[ubCMConnInfo.ArrayOfConnInfo[sessionId-1].hostConnHandle] = (uint16_t) (deltaTime / (pBleConnInfo->connInterval * BLE_TO_RAT) + 1);
+      }
+
+      ubCM_startNewSession(pBleConnInfo->connHandle,
+                           pBleConnInfo->accessAddr,
+                           pBleConnInfo->connRole,
+                           pBleConnInfo->connInterval,
+                           pBleConnInfo->hopValue,
+                           pBleConnInfo->currChan,
+                           pBleConnInfo->chanMap,
+                           pBleConnInfo->crcInit);
+
+      // stop the current session after creating the new one with the new parameters
+      ubCM_stop(sessionId);
+      gCmCtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
     }
-    ubCM_stop(sessionId);
-    gmicro_cm_CtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
   }
+  else
+  {
 
   // Kick CM
   BLE_LOG_INT_INT(0, BLE_LOG_MODULE_APP, "APP : cmStartReq start new hopValue=%d, currChan=%d\n", pBleConnInfo->hopValue, pBleConnInfo->currChan);
@@ -355,6 +389,7 @@ static void MicroCmApp_cmStartReq(uint8_t *pConnInfo)
                        pBleConnInfo->currChan,
                        pBleConnInfo->chanMap,
                        pBleConnInfo->crcInit);
+  }
 
 }
 
@@ -374,10 +409,13 @@ static void MicroCmApp_terminateLinkReq(uint8_t sessionId)
 
   ubCM_stop(sessionId);
 
-  gmicro_cm_CtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
+  gCmCtrlData.monitorTracking[sessionId - 1] = RTLS_FALSE;
 
   // Link terminated
-  RTLSCtrl_connResultEvt(hostConnHandle, RTLS_LINK_TERMINATED);
+  if (RTLS_CONNHANDLE_INVALID != hostConnHandle)
+  {
+    RTLSCtrl_connResultEvt(hostConnHandle, RTLS_LINK_TERMINATED);
+  }
 }
 
 /*********************************************************************
@@ -391,7 +429,32 @@ static void MicroCmApp_terminateLinkReq(uint8_t sessionId)
  */
 static void MicroCmApp_monitorIndicationEvt(uint8_t *pData)
 {
+  volatile uint32_t keyHwi;
+  if (pData != NULL)
+  {
+    packetReceivedEvt_t *pPacketInfo = (packetReceivedEvt_t *)pData;
+    switch(pPacketInfo->status)
+    {
+      case SUCCESS:
+      {
+        if (pPacketInfo->pPayload != NULL)
+        {
+          keyHwi = Hwi_disable();
+          free(pPacketInfo->pPayload);
+          Hwi_restore(keyHwi);
+        }
+        break;
+      }
 
+      case MSG_BUFFER_NOT_AVAIL:
+      {
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
 }
 
 /*********************************************************************
@@ -413,13 +476,13 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
   uint8_t channel;
   rtlsStatus_e status;
   uint16_t hostConnHandle;
-  port_key_t key;
-  port_key_t key_h;
+  volatile port_key_t key;
+  volatile port_key_t key_h;
 
   // Convert CM Status to RTLS Status
   if (pCompleteEvt->status != CM_FAILED_NOT_ACTIVE)
   {
-    if (gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_FALSE)
+    if (gCmCtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_FALSE)
     {
       hostConnHandle = MicroCmApp_getHostConnHandle(pCompleteEvt->sessionId);
       if (hostConnHandle == RTLS_CONNHANDLE_INVALID)
@@ -427,7 +490,7 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
         return;
       }
       RTLSCtrl_connResultEvt(hostConnHandle, RTLS_SUCCESS);
-      gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] = RTLS_TRUE;
+      gCmCtrlData.monitorTracking[pCompleteEvt->sessionId - 1] = RTLS_TRUE;
     }
     status = RTLS_SUCCESS;
   }
@@ -445,8 +508,8 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
 
 
   if (ubCM_isSessionActive(pCompleteEvt->sessionId) == CM_SUCCESS &&
-      gmicro_cm_CtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_TRUE &&
-      gmicro_cm_CtrlData.rtlsSyncEnabled && status != RTLS_FAIL)
+      gCmCtrlData.monitorTracking[pCompleteEvt->sessionId - 1] == RTLS_TRUE &&
+      gCmCtrlData.rtlsSyncEnabled && status != RTLS_FAIL && pCompleteEvt->status == MONITOR_SUCCESS)
   {
     ubCM_ConnInfo_t connInfo = ubCMConnInfo.ArrayOfConnInfo[pCompleteEvt->sessionId - 1];
 
@@ -475,7 +538,14 @@ static void MicroCmApp_monitorCompleteEvt(uint8_t *pData)
       responderRssi= CM_RSSI_NOT_AVAILABLE;
     }
 
-    RTLSCtrl_syncNotifyEvt(hostConnHandle, status, nextEventTimeUs, responderRssi, channel);
+    if (responderRssi != CM_RSSI_NOT_AVAILABLE)
+    {
+      RTLSCtrl_syncNotifyEvt(hostConnHandle, status, nextEventTimeUs, responderRssi, channel);
+    }
+    else
+    {
+        //don't send the notify sync
+    }
   }
 
   // Exit CS
@@ -541,13 +611,14 @@ uint8_t MicroCmApp_getSessionId(uint16_t hostConnHandle)
  *
  * @brief   This function will be called for each BLE CM state change
  *
- * @param   newState - The new state
+ * @param   pData - a pointer to the message
  *
  * @return  none
  */
-static void MicroCmApp_monitorStateChangeEvt(ugapMonitorState_t newState)
+static void MicroCmApp_monitorStateChangeEvt(uint8_t *pData)
 {
-  switch (newState)
+  ugapMonitorState_t* pNewState = (ugapMonitorState_t *)pData;
+  switch (*pNewState)
   {
     case UGAP_MONITOR_STATE_INITIALIZED:
     {
@@ -591,7 +662,7 @@ void MicroCmApp_init(void)
   BLE_LOG_INT_TIME(0, BLE_LOG_MODULE_APP, "APP : ---- init ", UCA_TASK_PRIORITY);
 
   // Create an RTOS queue for message from profile to be sent to app.
-  RTLSCtrl_createPQueue(&gmicro_cm_CtrlData.app_queueHandle,
+  RTLSCtrl_createPQueue(&gCmCtrlData.app_queueHandle,
                         "MicroCmApp_CmAppQueue",
                          UCA_QUEUE_SIZE,
                          sizeof(microCmAppEvt_t),
@@ -600,7 +671,7 @@ void MicroCmApp_init(void)
   char *ucaTaskStack;
   ucaTaskStack = (char *) RTLSCtrl_malloc( UCA_TASK_STACK_SIZE );
 
-  RTLSCtrl_createPTask(&gmicro_cm_CtrlData.app_threadId,
+  RTLSCtrl_createPTask(&gCmCtrlData.app_threadId,
                         MicroCmApp_taskFxn,
                         UCA_TASK_PRIORITY,
                         ucaTaskStack,
@@ -625,7 +696,7 @@ static void *MicroCmApp_taskFxn(void *arg)
   for(;;)
   {
     // If RTOS queue is not empty, process app message.
-    if (mq_receive(gmicro_cm_CtrlData.app_queueHandle, (char*)&appEvt, sizeof(appEvt), NULL) == sizeof(appEvt))
+    if (mq_receive(gCmCtrlData.app_queueHandle, (char*)&appEvt, sizeof(appEvt), NULL) == sizeof(appEvt))
     {
       // Process message.
       MicroCmApp_processMicroCmAppMsg((uint8_t *)&appEvt);
@@ -682,7 +753,7 @@ void MicroCmApp_enqueueAppMsg(uint16_t eventId, uint8_t *pMsg)
   AppEvt.event = eventId;
   AppEvt.pData = pMsg;
 
-  mq_send(gmicro_cm_CtrlData.app_queueHandle, (char*)&AppEvt, sizeof(AppEvt), 1);
+  mq_send(gCmCtrlData.app_queueHandle, (char*)&AppEvt, sizeof(AppEvt), 1);
 }
 
 /*********************************************************************
@@ -703,7 +774,7 @@ void MicroCmApp_stack_init(void)
   char *ubtTaskStack;
   ubtTaskStack = (char *) RTLSCtrl_malloc( UBT_TASK_STACK_SIZE );
 
-  RTLSCtrl_createPTask(&gmicro_cm_CtrlData.stack_threadId,
+  RTLSCtrl_createPTask(&gCmCtrlData.stack_threadId,
                         ubStack_taskFxn,
                         UBT_TASK_PRIORITY,
                         ubtTaskStack,
@@ -722,7 +793,7 @@ void MicroCmApp_stack_init(void)
 static void *ubStack_taskFxn(void *arg)
 {
   // Create an RTOS queue for message from profile to be sent to app.
-  RTLSCtrl_createPQueue(&gmicro_cm_CtrlData.stack_queueHandle,
+  RTLSCtrl_createPQueue(&gCmCtrlData.stack_queueHandle,
                         "MicroCmApp_CmStackQueue",
                          UBT_QUEUE_SIZE,
                          sizeof(ubtEvt_t),
@@ -737,7 +808,7 @@ static void *ubStack_taskFxn(void *arg)
   ubtEvt_t ubtEvt;
   for(;;)
   {
-    if (mq_receive(gmicro_cm_CtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), NULL) == sizeof(ubtEvt))
+    if (mq_receive(gCmCtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), NULL) == sizeof(ubtEvt))
     {
       // Only expects UBT_EVT_MICROBLESTACK from ubStack.
       if (ubtEvt.event == MICRO_CM_APP_USTACK_EVT)
@@ -778,7 +849,7 @@ static bStatus_t MicroCmApp_enqueueStackMsg(uint16 event, uint8 data)
   ubtEvt.data = data;
 
   // Enqueue the message.
-  status = mq_send(gmicro_cm_CtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), 1);
+  status = mq_send(gCmCtrlData.stack_queueHandle, (char*)&ubtEvt, sizeof(ubtEvt), 1);
 
   return status;
 }

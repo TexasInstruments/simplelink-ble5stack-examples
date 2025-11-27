@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2018-2024, Texas Instruments Incorporated
+ Copyright (c) 2018-2025, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -472,17 +472,22 @@ void RTLSCtrl_connResultEvt(uint16_t connHandle, uint8_t status)
 
   // If connection handle is valid we can take care of it
   // If it's not valid then we just output the status to the host
-  if (connHandle != RTLS_CONNHANDLE_ALL || connHandle != RTLS_CONNHANDLE_INVALID)
+  if (connHandle != RTLS_CONNHANDLE_ALL && connHandle != RTLS_CONNHANDLE_INVALID)
   {
     if (status == RTLS_SUCCESS)
     {
-      gRtlsData.connStateBm[connHandle] |= RTLS_STATE_CONNECTED;
-      gRtlsData.numActiveConns++;
-
+      if ((gRtlsData.connStateBm[connHandle] & RTLS_STATE_CONNECTED) != RTLS_STATE_CONNECTED)
+      {
+        gRtlsData.connStateBm[connHandle] |= RTLS_STATE_CONNECTED;
+        gRtlsData.numActiveConns++;
+      }
     }
     else if (status == RTLS_LINK_TERMINATED)
     {
-      gRtlsData.numActiveConns--;
+      if(gRtlsData.connStateBm[connHandle] & RTLS_STATE_CONNECTED)
+      {
+        gRtlsData.numActiveConns--;
+      }
       // We were disconnected, if AOA is enabled we should disable it
       if (gRtlsData.connStateBm[connHandle] & RTLS_STATE_AOA_ENABLED ||
           gRtlsData.connStateBm[connHandle] & RTLS_STATE_CONN_INFO_ENABLED)
@@ -1382,7 +1387,7 @@ void RTLSCtrl_processHostMessage(rtlsHostMsg_t *pHostMsg)
         RTLSUTIL_FREE(pHostMsg->pData);
       }
       break;
-      
+
       case RTLS_CMD_GET_ACTIVE_CONN_INFO:
       {
         RTLSCtrl_getActiveConnInfoCmd((rtlsGetActiveConnInfo_t *)pHostMsg->pData);
@@ -1915,13 +1920,13 @@ void RTLSCtrl_addDeviceToPeriodicAdvListCmd(uint8_t *pParams)
 }
 
 /*********************************************************************
- * @fn		RTLSCtrl_removeDeviceFromPeriodicAdvListCmd
+ * @fn      RTLSCtrl_removeDeviceFromPeriodicAdvListCmd
  *
- * @brief	Remove device from periodic advertisers list
+ * @brief   Remove device from periodic advertisers list
  *
- * @param	pParams - Device information
+ * @param   pParams - Device information
  *
- * @return	none
+ * @return  none
  */
 void RTLSCtrl_removeDeviceFromPeriodicAdvListCmd(uint8_t *pParams)
 {
@@ -1955,13 +1960,13 @@ void RTLSCtrl_readPeriodicAdvListSizeCmd( void )
 }
 
 /*********************************************************************
- * @fn		RTLSCtrl_clearPeriodicAdvListCmd
+ * @fn      RTLSCtrl_clearPeriodicAdvListCmd
  *
- * @brief	Cleat the periodic advertises list
+ * @brief   Cleat the periodic advertises list
  *
- * @param	none
+ * @param   none
  *
- * @return	none
+ * @return  none
  */
 void RTLSCtrl_clearPeriodicAdvListCmd( void )
 {
@@ -1973,6 +1978,7 @@ void RTLSCtrl_clearPeriodicAdvListCmd( void )
   // Return status to the host
   RTLSHost_sendMsg(RTLS_CMD_CLEAR_ADV_LIST, HOST_SYNC_RSP, (uint8_t *)&status, sizeof(rtlsStatus_e));
 }
+
 // -----------------------------------------------------------------------------
 //! \brief      Create a POSIX task.
 //              In case the stackaddr is not provided, allocate it on the heap.

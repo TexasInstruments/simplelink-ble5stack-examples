@@ -6,6 +6,7 @@
         device="Cortex M.CC2642R1F"
         connection="common/targetdb/connections/TIXDS110_Connection.xml"
         toolChain="TICLANG"
+        cgtVersion="3.2.2"
         linkerCommandFile="cc13x2_cc26x2_app.cmd"
         outputType="staticLibrary"
         preBuildStep=""
@@ -15,7 +16,6 @@
     >
 
         <!-- Project properties -->
-        <property name="products" value="com.ti.rtsc.XDCtools:3.62.01.15_core"/>
         <property name="target" value="ti.targets.arm.clang.M4F"/>
         <property name="platform" value="ti.platforms.simplelink:CC2642R1F"/>
         <property name="buildProfile" value="release"/>
@@ -37,9 +37,7 @@
             -g
             -mcpu=cortex-m4
             -march=armv7e-m
-            -D${XDC_SYMBOLS}
             -I${CG_TOOL_ROOT}/include
-            -I${XDC_INCLUDE_PATH}
             -I${SRC_BLE_DIR}/controller/cc26xx/inc
             -I${SRC_BLE_DIR}/inc
             -I${SRC_BLE_DIR}/rom
@@ -62,8 +60,7 @@
             -I${SRC_BLE_DIR}/../../../source/ti/devices/cc13x2_cc26x2/rf_patches
             -I${SRC_BLE_DIR}/../../../source/ti/devices/cc13x2_cc26x2/inc
             -I${SRC_BLE_DIR}/../../../source
-            -I${SRC_BLE_DIR}/../../../kernel/tirtos7/packages
-            -I${XDC_CG_ROOT}/packages"
+            -I${SRC_BLE_DIR}/../../../kernel/tirtos7/packages"
         />
 
         <pathVariable name="EXAMPLE_BLE_ROOT" path=".." scope="project"/>

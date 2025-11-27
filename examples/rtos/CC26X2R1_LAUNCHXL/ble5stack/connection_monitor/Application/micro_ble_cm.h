@@ -143,7 +143,23 @@ typedef struct
   uint16_t  hostConnHandle;                        //! keep connHandle from host requests
   uint8_t   outOfSyncFlag;                         //! flag indicating that the CM session is trying to get in sync
   uint32_t  outOfSyncTimeStamp;                    //! timeStamp for trying to get in sync
+  uint8_t   stopRequested;                         //! Indicates if the session needs to be stopped
+  uint8_t   isFirstPktMet;                         //! Indicates that first packet met and the first anchor point updated
+  bStatus_t indicationStatus;                      //! Indicates if we got the first packet in the RX window as expected or not
 } ubCM_ConnInfo_t;
+
+// Structure for the connection monitor status and data
+typedef struct
+{
+  uint32_t lastIndPacketTime;           //! The time of the last packet indication received
+  uint32_t lastNewSessionStartTime;     //! The time of the last new session started, used to enhance the calculation of the next channel calculation
+  uint8_t cmCentral;                    //! Flag to identify a packet from Central
+  uint8_t newSessionActive;             //! Indication of monitoring a new connection
+  uint8_t isSessionMonitored;           //! Indication whether there is a session is monitored or not
+  uint8_t newSessionId;                 //! The session ID of the new connection
+  uint8_t nextSessionId;                //! The session ID of the next monitored connection
+  uint8_t failedSessionToMonitor;       //! If not zero, then it holds a session that didn't schedule because there was no enough time to the rcl to start.
+} ubCM_Data_t;
 
 typedef struct
 {
@@ -205,7 +221,7 @@ typedef struct
  * GLOBAL VARIABLES
  */
 extern ubCM_GetConnInfoComplete_t ubCMConnInfo;
-
+extern uint8 gUpdateSessionMissEvents[];
 /*********************************************************************
  * API FUNCTIONS
  */
@@ -412,6 +428,17 @@ uint8_t ubCM_findNextPriorityEvt(void);
  */
 void ubCM_setupNextCMEvent(uint8_t sessionId);
 
+/*********************************************************************
+ * @fn      ubCM_isAnchorRelevant
+ *
+ * @brief   Check if the given anchor time is greater or not from the last new session start time
+ *
+ * @param   anchorTime - last anchor time.
+ *
+ * @return      TRUE:  When anchor time is greater than the last new session start time ; otherwise
+ *              return FALSE.
+ */
+uint8_t ubCM_isAnchorRelevant(uint32_t anchorTime);
 /*********************************************************************
 *********************************************************************/
 

@@ -14,6 +14,7 @@
         name="project_zero_LP_CC2651P3_tirtos7_ticlang"
         configurations="Release, Debug"
         toolChain="TICLANG"
+        cgtVersion="3.2.2"
         connection="TIXDS110_Connection.xml"
         device="Cortex M.CC2651P3"
         ignoreDefaultDeviceSettings="true"

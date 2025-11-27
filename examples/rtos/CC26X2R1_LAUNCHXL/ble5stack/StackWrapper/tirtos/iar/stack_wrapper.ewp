@@ -70,7 +70,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>9.40.2.67587</state>
+                    <state>9.60.2.5599</state>
                 </option>
                 <option>
                     <name>OGChipSelectEditMenu</name>
@@ -309,7 +309,6 @@
                     <state>-f $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\ble5stack\config\factory_config.opt</state>
                     <state>-f $BUILD_CONFIG_DIR$\build_config.opt</state>
                     <state>--diag_suppress=Pa050</state>
-                    <state>-Dxdc_target_types__=iar\targets\arm\std.h</state>
                     <state>--make_all_definitions_weak</state>
                 </option>
                 <option>
@@ -371,7 +370,6 @@
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\devices\cc13x2_cc26x2\rf_patches</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\cc13x2_cc26x2\inc</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source</state>
-                    <state>$XDCROOT$\packages</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1408,7 +1406,6 @@
                     <state>-f $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\ble5stack\config\factory_config.opt</state>
                     <state>-f $BUILD_CONFIG_DIR$\build_config.opt</state>
                     <state>--diag_suppress=Pa050</state>
-                    <state>-Dxdc_target_types__=iar\targets\arm\std.h</state>
                     <state>--make_all_definitions_weak</state>
                 </option>
                 <option>
@@ -1470,7 +1467,6 @@
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\devices\cc13x2_cc26x2\rf_patches</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\cc13x2_cc26x2\inc</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source</state>
-                    <state>$XDCROOT$\packages</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2507,7 +2503,6 @@
                     <state>-f $SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\ble5stack\config\factory_config.opt</state>
                     <state>-f $BUILD_CONFIG_DIR$\build_config.opt</state>
                     <state>--diag_suppress=Pa050</state>
-                    <state>-Dxdc_target_types__=iar\targets\arm\std.h</state>
                     <state>--make_all_definitions_weak</state>
                 </option>
                 <option>
@@ -2569,7 +2564,6 @@
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\devices\cc13x2_cc26x2\rf_patches</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source\ti\cc13x2_cc26x2\inc</state>
                     <state>$SIMPLELINK_CC13XX_CC26XX_SDK_INSTALL_DIR$\source</state>
-                    <state>$XDCROOT$\packages</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>

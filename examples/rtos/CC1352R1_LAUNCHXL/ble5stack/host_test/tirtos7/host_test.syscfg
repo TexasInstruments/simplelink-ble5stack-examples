@@ -180,7 +180,7 @@ for(var setting in bleRadioSettings)
 }
 
 if(rfDesignSettings.rfDesign == "LAUNCHXL-CC1352P-2" || rfDesignSettings.rfDesign == "LAUNCHXL-CC1352P-4" || rfDesignSettings.rfDesign == "LP_CC2652PSIP" || rfDesignSettings.rfDesign == "LP_CC1352P7-4" || rfDesignSettings.rfDesign == "LP_CC2651P3"
-   || rfDesignSettings.rfDesign == "LP_EM_CC1354P10_6")
+   || rfDesignSettings.rfDesign == "LP_EM_CC1354P10_6" || rfDesignSettings.rfDesign == "LP_EM_CC2674P10")
 {
     bleRadioSetModule.highPA = true;
 	if(rfDesignSettings.rfDesign == "LAUNCHXL-CC1352P-4" || rfDesignSettings.rfDesign == "LP_CC2652PSIP" || rfDesignSettings.rfDesign == "LP_CC1352P7-4" || rfDesignSettings.rfDesign == "LP_EM_CC1354P10_6")
@@ -265,7 +265,7 @@ if (system.getRTOS() === "tirtos7")
     Clock.swiPriority = 5;
 
     /* ================ Hwi configuration ================ */
-    if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6")
+    if(lpName == "LP_EM_CC1354P10_1" || lpName == "LP_EM_CC1354P10_6" || lpName == "LP_EM_CC2674P10")
     {
         var Hwi = scripting.addModule("/ti/sysbios/family/arm/v8m/Hwi", {}, false);
     }
@@ -343,7 +343,6 @@ if (system.getRTOS() === "tirtos7")
     const powerIdle = Idle.addInstance();
     powerIdle.$name = "powerIdle";
     powerIdle.idleFxn = "Power_idleFunc";
-
 
     /* ================ Semaphore configuration ================ */
     var Semaphore = scripting.addModule("/ti/sysbios/knl/Semaphore", {}, false);

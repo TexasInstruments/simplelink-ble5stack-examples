@@ -347,7 +347,8 @@ if (system.getRTOS() === "tirtos7")
 
     /* ================ Power configuration ================ */
     const Power = scripting.addModule("/ti/drivers/Power");
-    Power.policyFunction = "PowerCC26XX_doWFI";
+    Power.policyFunction    = "PowerCC26XX_doWFI";
+    Power.calibrateFunction = "PowerCC26XX_noCalibrate";
 
     /* ================ Idle configuration ================ */
     const Idle    = scripting.addModule("/ti/sysbios/knl/Idle", {}, false);

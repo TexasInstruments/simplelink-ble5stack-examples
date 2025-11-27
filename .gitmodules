@@ -1,8 +1,6 @@
 [submodule "simplelink-lowpower-f3-sdk"]
 	path = simplelink-lowpower-f3-sdk
 	url = https://github.com/TexasInstruments/simplelink-lowpower-f3-sdk.git
-	branch = main
 [submodule "cc13xx_cc26xx_sdk"]
 	path = cc13xx_cc26xx_sdk
 	url = https://github.com/TexasInstruments/cc13xx_cc26xx_sdk.git
-	branch = main

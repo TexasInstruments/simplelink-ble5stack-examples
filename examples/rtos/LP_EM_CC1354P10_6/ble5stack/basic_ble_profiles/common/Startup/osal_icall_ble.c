@@ -9,7 +9,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2013-2024, Texas Instruments Incorporated
+ Copyright (c) 2013-2025, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -113,11 +113,15 @@ const pTaskEventHandlerFn tasksArr[] =
 #if defined ( OSAL_CBTIMER_NUM_TASKS )
   OSAL_CBTIMER_PROCESS_EVENT( osal_CbTimerProcessEvent ),           // task 2
 #endif
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
   L2CAP_ProcessEvent,                                               // task 3
+#endif
   GAP_ProcessEvent,                                                 // task 4
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
   SM_ProcessEvent,                                                  // task 5
   GATT_ProcessEvent,                                                // task 6
   GATTServApp_ProcessEvent,                                         // task 7
+#endif
 #if defined ( GAP_BOND_MGR )
   GAPBondMgr_ProcessEvent,                                          // task 8
 #endif
@@ -151,6 +155,7 @@ void osalInitTasks( void )
   uint8 taskID = 0;
   uint8 i;
 
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
   uint8_t cfg_GATTServApp_att_delayed_req = 0;
   uint8_t cfg_gapBond_gatt_no_service_changed = 0;
   uint8_t cfg_gatt_max_num_prepare_writes = 0;
@@ -170,6 +175,7 @@ void osalInitTasks( void )
 #if defined ( GATT_MAX_PREPARE_WRITES )
   cfg_gatt_max_num_prepare_writes = GATT_MAX_PREPARE_WRITES;
 #endif
+#endif
 
   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
@@ -186,12 +192,15 @@ void osalInitTasks( void )
   taskID += OSAL_CBTIMER_NUM_TASKS;
 #endif
 
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
   /* L2CAP Task */
   L2CAP_Init( taskID++ );
+#endif // ( CENTRAL_CFG | PERIPHERAL_CFG )
 
   /* GAP Task */
   GAP_Init( taskID++ );
 
+#if defined( HOST_CONFIG ) && ( HOST_CONFIG & ( PERIPHERAL_CFG | CENTRAL_CFG ) )
   /* SM Task */
   SM_Init( taskID++ );
 
@@ -200,6 +209,7 @@ void osalInitTasks( void )
 
   /* GATT Server App Task */
   GATTServApp_Init( taskID++, cfg_GATTServApp_att_delayed_req, cfg_gapBond_gatt_no_service_changed, cfg_gatt_max_num_prepare_writes );
+#endif // ( CENTRAL_CFG | PERIPHERAL_CFG )
 
 #if defined ( GAP_BOND_MGR )
   /* Bond Manager Task */
